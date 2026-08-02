@@ -36,12 +36,19 @@ export interface HourLog {
   notes?: string;
 }
 
+export interface AssignedEmployee {
+  _id: string;
+  name: string;
+  employeeId: string;
+  speciality?: string;
+}
+
 export interface Task {
   _id: string;
   taskType: TaskType;
   numEmployees: number;
   description: string;
-  assignedEmployees: string[];
+  assignedEmployees: Array<string | AssignedEmployee>;
   client: string | { _id?: string; name: string; address: string; phone: string };
   status: TaskStatus;
   startDate?: string;

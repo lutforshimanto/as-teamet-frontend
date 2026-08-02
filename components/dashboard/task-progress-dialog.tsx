@@ -24,9 +24,10 @@ import {
 } from '@/components/ui/select';
 import { StatusBadge } from '@/components/dashboard/status-badge';
 import { useToast } from '@/hooks/use-toast';
-import { useAppDispatch } from '@/lib/redux/hooks';
+import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
 import { addPhoto, logHours, updateTask, updateTaskProgress } from '@/lib/redux/slices/tasksSlice';
-import type { Task, TaskStatus } from '@/lib/types';
+import type { Client, Task, TaskStatus, User } from '@/lib/types';
+import { normalizeAssignedEmployeeIds } from '@/lib/utils';
 
 interface FormData {
   status: TaskStatus;
@@ -34,6 +35,8 @@ interface FormData {
   endDate: string;
   description?: string;
   numEmployees?: number;
+  clientId: string;
+  assignedEmployeeIds: string[];
 }
 
 interface Props {
@@ -41,24 +44,34 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   isAdmin: boolean;
+  clients: Client[];
+  users: User[];
 }
 
-export function TaskProgressDialog({ task, open, onOpenChange, isAdmin }: Props) {
+export function TaskProgressDialog({ task, open, onOpenChange, isAdmin, clients, users }: Props) {
   const dispatch = useAppDispatch();
   const { toast } = useToast();
+  const currentUser = useAppSelector((state) => state.auth.user);
+  const currentTask = useAppSelector((state) => state.tasks.items.find((item) => item._id === task._id) ?? task);
+  const initialClientId = typeof currentTask.client === 'string' ? currentTask.client : currentTask.client?._id || '';
+  const employees = users.filter((user) => user.role === 'employee' || user.role === 'admin');
+  const currentAssignedEmployeeIds = normalizeAssignedEmployeeIds(currentTask.assignedEmployees || []);
 
   const {
     control,
     handleSubmit,
     reset,
+    watch: watchTask,
     formState: { isSubmitting },
   } = useForm<FormData>({
     defaultValues: {
-      status: task.status,
-      startDate: task.startDate ? task.startDate.split('T')[0] : '',
-      endDate: task.endDate ? task.endDate.split('T')[0] : '',
-      description: task.description,
-      numEmployees: task.numEmployees,
+      status: currentTask.status,
+      startDate: currentTask.startDate ? currentTask.startDate.split('T')[0] : '',
+      endDate: currentTask.endDate ? currentTask.endDate.split('T')[0] : '',
+      description: currentTask.description,
+      numEmployees: currentTask.numEmployees,
+      clientId: initialClientId,
+      assignedEmployeeIds: currentAssignedEmployeeIds,
     },
   });
 
@@ -66,14 +79,14 @@ export function TaskProgressDialog({ task, open, onOpenChange, isAdmin }: Props)
     register: registerHours,
     handleSubmit: handleHoursSubmit,
     reset: resetHours,
-    watch,
+    watch: watchHours,
     formState: { isSubmitting: isHoursSubmitting },
   } = useForm<{ date: string; startTime: string; endTime: string; notes: string }>({
     defaultValues: { date: '', startTime: '', endTime: '', notes: '' },
   });
 
-  const startTime = watch('startTime');
-  const endTime = watch('endTime');
+  const startTime = watchHours('startTime');
+  const endTime = watchHours('endTime');
   const computedHours = (() => {
     if (!startTime || !endTime) return 0;
 
@@ -97,42 +110,69 @@ export function TaskProgressDialog({ task, open, onOpenChange, isAdmin }: Props)
   });
 
   useEffect(() => {
+    if (!open) return;
+
     reset({
-      status: task.status,
-      startDate: task.startDate ? task.startDate.split('T')[0] : '',
-      endDate: task.endDate ? task.endDate.split('T')[0] : '',
-      description: task.description,
-      numEmployees: task.numEmployees,
+      status: currentTask.status,
+      startDate: currentTask.startDate ? currentTask.startDate.split('T')[0] : '',
+      endDate: currentTask.endDate ? currentTask.endDate.split('T')[0] : '',
+      description: currentTask.description,
+      numEmployees: currentTask.numEmployees,
+      clientId: typeof currentTask.client === 'string' ? currentTask.client : currentTask.client?._id || '',
+      assignedEmployeeIds: normalizeAssignedEmployeeIds(currentTask.assignedEmployees || []),
     });
-  }, [task, reset]);
+  }, [open, currentTask, reset]);
 
   const onSubmit = async (data: FormData) => {
+    const assignedEmployeeIds = data.assignedEmployeeIds || [];
+    const uniqueEmployeeIds = new Set(assignedEmployeeIds);
+    if (uniqueEmployeeIds.size !== assignedEmployeeIds.length) {
+      toast({ variant: 'destructive', title: 'Invalid selection', description: 'Assigned employees cannot include the same employee twice.' });
+      return;
+    }
+
+    if ((assignedEmployeeIds.length || 0) > (data.numEmployees || 0)) {
+      toast({ variant: 'destructive', title: 'Invalid selection', description: 'Assigned employees cannot exceed the number of employees required for this task.' });
+      return;
+    }
+
     try {
+      let resultAction;
       if (isAdmin) {
-        await dispatch(
+        resultAction = await dispatch(
           updateTask({
-            id: task._id,
+            id: currentTask._id,
             data: {
               status: data.status,
               startDate: data.startDate || undefined,
               endDate: data.endDate || undefined,
               description: data.description,
               numEmployees: data.numEmployees,
+              client: data.clientId || undefined,
+              assignedEmployees: data.assignedEmployeeIds || [],
             } as any,
           })
-        ).unwrap();
+        );
       } else {
-        await dispatch(
+        resultAction = await dispatch(
           updateTaskProgress({
-            id: task._id,
+            id: currentTask._id,
             startDate: data.startDate || undefined,
             endDate: data.endDate || undefined,
             status: data.status,
           })
-        ).unwrap();
+        );
       }
-      toast({ title: 'Task updated', description: 'Changes have been saved.' });
-      onOpenChange(false);
+
+      if (updateTask.fulfilled.match(resultAction) || updateTaskProgress.fulfilled.match(resultAction)) {
+        const payload = 'payload' in resultAction ? resultAction.payload : undefined;
+        toast({ title: 'Task updated', description: payload?.message || 'Changes have been saved.' });
+        onOpenChange(false);
+        return;
+      }
+
+      const message = resultAction.payload?.message || resultAction.error.message || 'Failed to update task';
+      toast({ variant: 'destructive', title: 'Error', description: message });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to update task';
       toast({ variant: 'destructive', title: 'Error', description: message });
@@ -148,18 +188,27 @@ export function TaskProgressDialog({ task, open, onOpenChange, isAdmin }: Props)
     }
 
     try {
-      await dispatch(logHours({
-        id: task._id,
+      const resultAction = await dispatch(logHours({
+        id: currentTask._id,
         data: {
           date: data.date,
           hours,
           startTime: data.startTime,
           endTime: data.endTime,
           notes: data.notes || undefined,
+          employee: currentUser?._id,
+          employeeId: currentUser?.employeeId,
         },
-      })).unwrap();
-      toast({ title: 'Hours logged', description: 'The time entry has been added.' });
-      resetHours({ date: '', startTime: '', endTime: '', notes: '' });
+      }));
+
+      if (logHours.fulfilled.match(resultAction)) {
+        toast({ title: 'Hours logged', description: resultAction.payload.message || 'The time entry has been added.' });
+        resetHours({ date: '', startTime: '', endTime: '', notes: '' });
+        return;
+      }
+
+      const message = resultAction.payload?.message || resultAction.error.message || 'Failed to log hours';
+      toast({ variant: 'destructive', title: 'Error', description: message });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to log hours';
       toast({ variant: 'destructive', title: 'Error', description: message });
@@ -168,9 +217,21 @@ export function TaskProgressDialog({ task, open, onOpenChange, isAdmin }: Props)
 
   const onAddPhoto = async (data: { photoUrl: string }) => {
     try {
-      await dispatch(addPhoto({ id: task._id, photoUrl: data.photoUrl })).unwrap();
-      toast({ title: 'Photo added', description: 'The photo has been attached to the task.' });
-      resetPhoto({ photoUrl: '' });
+      const resultAction = await dispatch(addPhoto({
+        id: currentTask._id,
+        photoUrl: data.photoUrl,
+        employee: currentUser?._id,
+        employeeId: currentUser?.employeeId,
+      }));
+
+      if (addPhoto.fulfilled.match(resultAction)) {
+        toast({ title: 'Photo added', description: resultAction.payload.message || 'The photo has been attached to the task.' });
+        resetPhoto({ photoUrl: '' });
+        return;
+      }
+
+      const message = resultAction.payload?.message || resultAction.error.message || 'Failed to add photo';
+      toast({ variant: 'destructive', title: 'Error', description: message });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to add photo';
       toast({ variant: 'destructive', title: 'Error', description: message });
@@ -181,9 +242,9 @@ export function TaskProgressDialog({ task, open, onOpenChange, isAdmin }: Props)
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="capitalize">{task.taskType.replace('-', ' ')}</DialogTitle>
+          <DialogTitle className="capitalize">{currentTask.taskType.replace('-', ' ')}</DialogTitle>
           <DialogDescription>
-            {isAdmin ? 'Edit task details' : 'Update task progress'} — {typeof task.client === 'string' ? 'Client selected' : task.client.name}
+            {isAdmin ? 'Edit task details' : 'Update task progress'} — {typeof currentTask.client === 'string' ? 'Client selected' : currentTask.client.name}
           </DialogDescription>
         </DialogHeader>
 
@@ -191,15 +252,15 @@ export function TaskProgressDialog({ task, open, onOpenChange, isAdmin }: Props)
         <div className="space-y-3 rounded-lg border bg-secondary/30 p-4">
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Current Status</span>
-            <StatusBadge status={task.status} />
+            <StatusBadge status={currentTask.status} />
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Description</p>
-            <p className="mt-1 text-sm">{task.description}</p>
+            <p className="mt-1 text-sm">{currentTask.description}</p>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Employees needed</span>
-            <span className="font-medium">{task.numEmployees}</span>
+            <span className="font-medium">{currentTask.numEmployees}</span>
           </div>
         </div>
 
@@ -255,6 +316,98 @@ export function TaskProgressDialog({ task, open, onOpenChange, isAdmin }: Props)
                 />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="clientId">Assign Client</Label>
+                <Controller
+                  name="clientId"
+                  control={control}
+                  render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choose a client" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {clients.map((client) => (
+                          <SelectItem key={client._id} value={client._id}>
+                            {client.name} {'<>'} {client.phone}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Assign Employees</Label>
+                <Controller
+                  name="assignedEmployeeIds"
+                  control={control}
+                  render={({ field }) => {
+                    const selectedEmployeeIds = normalizeAssignedEmployeeIds(field.value && field.value.length > 0 ? field.value : currentTask.assignedEmployees || []);
+                    const availableEmployees = employees.filter((employee) => !selectedEmployeeIds.includes(employee._id));
+
+                    return (
+                      <div className="space-y-3 rounded-md border p-3">
+                        <Select
+                          value=""
+                          onValueChange={(value) => {
+                            const nextValue = [...selectedEmployeeIds, value];
+
+                            const uniqueValues = new Set(nextValue);
+                            if (uniqueValues.size !== nextValue.length) {
+                              toast({ variant: 'destructive', title: 'Invalid selection', description: 'Assigned employees cannot include the same employee twice.' });
+                              return;
+                            }
+
+                            if (nextValue.length > (watchTask('numEmployees') || 0)) {
+                              toast({ variant: 'destructive', title: 'Invalid selection', description: 'Assigned employees cannot exceed the number of employees required for this task.' });
+                              return;
+                            }
+
+                            field.onChange(nextValue);
+                          }}
+                          disabled={availableEmployees.length === 0}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder={availableEmployees.length > 0 ? 'Select an employee' : 'All employees assigned'} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableEmployees.map((employee) => (
+                              <SelectItem key={employee._id} value={employee._id}>
+                                {employee.name} {'<>'} {employee.employeeId}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+
+                        {selectedEmployeeIds.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {selectedEmployeeIds.map((employeeId) => {
+                              const employee = employees.find((item) => item._id === employeeId);
+                              if (!employee) return null;
+
+                              return (
+                                <div key={employee._id} className="flex items-center gap-2 rounded-full border bg-background px-2 py-1 text-sm">
+                                  <span>{employee.name}</span>
+                                  <button
+                                    type="button"
+                                    className="text-muted-foreground hover:text-foreground"
+                                    onClick={() => field.onChange(selectedEmployeeIds.filter((id) => id !== employee._id))}
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">No employees selected yet.</p>
+                        )}
+                      </div>
+                    );
+                  }}
+                />
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>
                 <Controller
                   name="description"
@@ -282,7 +435,7 @@ export function TaskProgressDialog({ task, open, onOpenChange, isAdmin }: Props)
           </DialogFooter>
         </form>
 
-        {!isAdmin && (
+        {currentUser && (
           <div className="space-y-4 rounded-lg border bg-secondary/20 p-4">
             <div>
               <h4 className="font-medium">Quick updates</h4>

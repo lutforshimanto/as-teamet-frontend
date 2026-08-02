@@ -209,6 +209,8 @@ export default function TasksPage() {
           open={!!progressTask}
           onOpenChange={(open) => !open && setProgressTask(null)}
           isAdmin={isAdmin}
+          clients={clients}
+          users={users}
         />
       )}
     </div>
