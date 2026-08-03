@@ -31,7 +31,7 @@ import { TaskProgressDialog } from '@/components/dashboard/task-progress-dialog'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
 import { fetchClients } from '@/lib/redux/slices/clientsSlice';
 import { fetchTasks, setFilter } from '@/lib/redux/slices/tasksSlice';
-import { fetchUsers } from '@/lib/redux/slices/usersSlice';
+import { fetchUsers, fetchUserDirectory } from '@/lib/redux/slices/usersSlice';
 import type { Task } from '@/lib/types';
 
 export default function TasksPage() {
@@ -47,7 +47,16 @@ export default function TasksPage() {
   const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
-    dispatch(fetchUsers());
+    // Admins get full user records (needed by TaskFormDialog to assign
+    // employees). Everyone else gets the minimal, non-admin-gated
+    // directory (name/employeeId/_id) — enough to display names in
+    // TaskProgressDialog without hitting the admin-only /api/users route.
+    if (isAdmin) {
+      dispatch(fetchUsers());
+    } else {
+      dispatch(fetchUserDirectory());
+    }
+
     dispatch(fetchClients());
 
     const now = new Date();
@@ -60,7 +69,7 @@ export default function TasksPage() {
     } else {
       dispatch(fetchTasks());
     }
-  }, [dispatch, filter]);
+  }, [dispatch, filter, isAdmin]);
 
   const handleFilterChange = (value: string) => {
     dispatch(setFilter(value));

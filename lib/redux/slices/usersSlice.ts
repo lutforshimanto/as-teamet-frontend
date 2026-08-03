@@ -9,9 +9,19 @@ interface UsersState {
 
 const initialState: UsersState = { items: [], status: 'idle', error: null };
 
+// Admin-only: full user records (role, address, phone, etc).
+// Will 403 for non-admin accounts — only dispatch this from admin-gated UI.
 export const fetchUsers = createAsyncThunk('users/fetchUsers', async () => {
   const res = await fetch('/api/users');
   if (!res.ok) throw new Error('Failed to fetch users');
+  return (await res.json()) as User[];
+});
+
+// Any logged-in user: minimal fields (name, employeeId, _id) only.
+// Safe to dispatch from any page that just needs to resolve employee labels.
+export const fetchUserDirectory = createAsyncThunk('users/fetchUserDirectory', async () => {
+  const res = await fetch('/api/users/directory');
+  if (!res.ok) throw new Error('Failed to fetch user directory');
   return (await res.json()) as User[];
 });
 
@@ -62,6 +72,15 @@ const usersSlice = createSlice({
         state.items = action.payload;
       })
       .addCase(fetchUsers.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.error.message || 'Failed';
+      })
+      .addCase(fetchUserDirectory.pending, (state) => { state.status = 'loading'; })
+      .addCase(fetchUserDirectory.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.items = action.payload;
+      })
+      .addCase(fetchUserDirectory.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.error.message || 'Failed';
       })

@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
-import { fetchUsers } from '@/lib/redux/slices/usersSlice';
+import { fetchUserDirectory } from '@/lib/redux/slices/usersSlice';
 import type { Task } from '@/lib/types';
 
 // --- Lightbox component ---
@@ -106,7 +106,7 @@ export default function TaskViewPage() {
   // Fetch users on mount — a page refresh wipes the Redux store, and this
   // page has no other guarantee that `users.items` is populated.
   useEffect(() => {
-    dispatch(fetchUsers());
+    dispatch(fetchUserDirectory());
   }, [dispatch]);
 
   useEffect(() => {
