@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { StatusBadge } from '@/components/dashboard/status-badge';
+import ImageUploader from '@/components/ImageUploader';
 import { useToast } from '@/hooks/use-toast';
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
 import { addPhoto, logHours, updateTask, updateTaskProgress } from '@/lib/redux/slices/tasksSlice';
@@ -52,6 +53,7 @@ export function TaskProgressDialog({ task, open, onOpenChange, isAdmin, clients,
   const dispatch = useAppDispatch();
   const { toast } = useToast();
   const currentUser = useAppSelector((state) => state.auth.user);
+  const authToken = useAppSelector((state) => state.auth.token);
   const currentTask = useAppSelector((state) => state.tasks.items.find((item) => item._id === task._id) ?? task);
   const initialClientId = typeof currentTask.client === 'string' ? currentTask.client : currentTask.client?._id || '';
   const employees = users.filter((user) => user.role === 'employee' || user.role === 'admin');
@@ -99,15 +101,6 @@ export function TaskProgressDialog({ task, open, onOpenChange, isAdmin, clients,
 
     return diffMinutes > 0 ? Number((diffMinutes / 60).toFixed(2)) : 0;
   })();
-
-  const {
-    register: registerPhoto,
-    handleSubmit: handlePhotoSubmit,
-    reset: resetPhoto,
-    formState: { isSubmitting: isPhotoSubmitting },
-  } = useForm<{ photoUrl: string }>({
-    defaultValues: { photoUrl: '' },
-  });
 
   useEffect(() => {
     if (!open) return;
@@ -211,29 +204,6 @@ export function TaskProgressDialog({ task, open, onOpenChange, isAdmin, clients,
       toast({ variant: 'destructive', title: 'Error', description: message });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to log hours';
-      toast({ variant: 'destructive', title: 'Error', description: message });
-    }
-  };
-
-  const onAddPhoto = async (data: { photoUrl: string }) => {
-    try {
-      const resultAction = await dispatch(addPhoto({
-        id: currentTask._id,
-        photoUrl: data.photoUrl,
-        employee: currentUser?._id,
-        employeeId: currentUser?.employeeId,
-      }));
-
-      if (addPhoto.fulfilled.match(resultAction)) {
-        toast({ title: 'Photo added', description: resultAction.payload.message || 'The photo has been attached to the task.' });
-        resetPhoto({ photoUrl: '' });
-        return;
-      }
-
-      const message = resultAction.payload?.message || resultAction.error.message || 'Failed to add photo';
-      toast({ variant: 'destructive', title: 'Error', description: message });
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to add photo';
       toast({ variant: 'destructive', title: 'Error', description: message });
     }
   };
@@ -472,15 +442,13 @@ export function TaskProgressDialog({ task, open, onOpenChange, isAdmin, clients,
               </Button>
             </form>
 
-            <form onSubmit={handlePhotoSubmit(onAddPhoto)} className="space-y-3">
-              <div className="space-y-2">
-                <Label htmlFor="photoUrl">Photo URL</Label>
-                <Input placeholder="https://example.com/photo.jpg" {...registerPhoto('photoUrl', { required: true })} />
-              </div>
-              <Button type="submit" variant="outline" disabled={isPhotoSubmitting}>
-                {isPhotoSubmitting ? 'Saving...' : 'Add Photo'}
-              </Button>
-            </form>
+            <div className="space-y-3">
+              <ImageUploader
+                taskId={currentTask._id}
+                userId={currentUser?._id || 'unknown'}
+                token={authToken || undefined}
+              />
+            </div>
           </div>
         )}
       </DialogContent>
