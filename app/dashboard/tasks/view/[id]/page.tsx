@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { useAppSelector } from '@/lib/redux/hooks';
-import type { Task, User } from '@/lib/types';
+import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
+import { fetchUsers } from '@/lib/redux/slices/usersSlice';
+import type { Task } from '@/lib/types';
 
 // --- Lightbox component ---
 function PhotoLightbox({
@@ -94,12 +95,19 @@ function PhotoLightbox({
 export default function TaskViewPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
+  const dispatch = useAppDispatch();
   const authToken = useAppSelector((state) => state.auth.token);
-  const users = useAppSelector((state) => state.users.items);
+  const { items: users, status: usersStatus } = useAppSelector((state) => state.users);
   const [task, setTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+
+  // Fetch users on mount — a page refresh wipes the Redux store, and this
+  // page has no other guarantee that `users.items` is populated.
+  useEffect(() => {
+    dispatch(fetchUsers());
+  }, [dispatch]);
 
   useEffect(() => {
     const loadTask = async () => {
@@ -141,6 +149,12 @@ export default function TaskViewPage() {
     const employeeId = entry.employee || entry.employeeId;
     if (!employeeId) {
       return 'Unknown employee';
+    }
+
+    // Users haven't loaded yet — show a placeholder instead of the raw ID
+    // so we never flash the ID string while fetchUsers is in flight.
+    if (usersStatus === 'loading' || usersStatus === 'idle') {
+      return 'Loading…';
     }
 
     const match = users.find((user) => user._id === employeeId || user.employeeId === employeeId);
