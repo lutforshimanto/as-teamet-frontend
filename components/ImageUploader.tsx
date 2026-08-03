@@ -117,30 +117,47 @@ export default function ImageUploader({
     }
   }, [taskId, token, userId]);
 
-  const handleDelete = async (key: string) => {
+  const handleDelete = async (image: UploadedImage) => {
     if (!window.confirm('Are you sure you want to delete this image?')) {
       return;
     }
 
-    setDeletingKey(key);
+    setDeletingKey(image.key);
     setError(null);
 
     try {
-      const res = await fetch('/api/delete', {
+      const deleteRes = await fetch('/api/delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key }),
+        body: JSON.stringify({ key: image.key }),
       });
 
-      const data = await res.json();
-
-      if (data.success) {
-        setUploadedImages((prev) => prev.filter((img) => img.key !== key));
-      } else {
-        setError(data.error || 'Failed to delete image');
+      const deleteData = await deleteRes.json();
+      if (!deleteData.success) {
+        throw new Error(deleteData.error || 'Failed to delete image from storage');
       }
-    } catch {
-      setError('Delete failed');
+
+      const backendUrl = baseUrl
+        ? `${baseUrl.replace(/\/$/, '')}/api/tasks/${taskId}/photos`
+        : `/api/tasks/${taskId}/photos`;
+
+      const backendRes = await fetch(backendUrl, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ url: image.url }),
+      });
+
+      if (!backendRes.ok) {
+        throw new Error('Failed to remove image from task');
+      }
+
+      setUploadedImages((prev) => prev.filter((img) => img.key !== image.key));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Delete failed';
+      setError(message);
     } finally {
       setDeletingKey(null);
     }
@@ -230,7 +247,7 @@ export default function ImageUploader({
                   size="sm"
                   variant="destructive"
                   className="absolute right-2 top-2 h-8 w-8 rounded-full p-0"
-                  onClick={() => void handleDelete(img.key)}
+                  onClick={() => void handleDelete(img)}
                   disabled={deletingKey === img.key}
                 >
                   {deletingKey === img.key ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}

@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Plus, Filter, CalendarDays, ListTodo, Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Plus, Filter, CalendarDays, ListTodo, Loader2, Eye } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -35,6 +36,7 @@ import type { Task } from '@/lib/types';
 
 export default function TasksPage() {
   const dispatch = useAppDispatch();
+  const router = useRouter();
   const { user } = useAppSelector((s) => s.auth);
   const { items: tasks, status, filter } = useAppSelector((s) => s.tasks);
   const { items: clients } = useAppSelector((s) => s.clients);
@@ -149,13 +151,23 @@ export default function TasksPage() {
                         <TableCell>{task.numEmployees}</TableCell>
                         <TableCell><StatusBadge status={task.status} /></TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setProgressTask(task)}
-                          >
-                            {isAdmin ? 'Edit' : 'Update'}
-                          </Button>
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => router.push(`/dashboard/tasks/view/${task._id}`)}
+                            >
+                              <Eye className="mr-2 h-4 w-4" />
+                              View
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setProgressTask(task)}
+                            >
+                              {isAdmin ? 'Edit' : 'Update'}
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -183,13 +195,23 @@ export default function TasksPage() {
                       <span className="text-xs text-muted-foreground">
                         {task.numEmployees} employees needed
                       </span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setProgressTask(task)}
-                      >
-                        {isAdmin ? 'Edit' : 'Update'}
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => router.push(`/dashboard/tasks/view/${task._id}`)}
+                        >
+                          <Eye className="mr-2 h-4 w-4" />
+                          View
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setProgressTask(task)}
+                        >
+                          {isAdmin ? 'Edit' : 'Update'}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}

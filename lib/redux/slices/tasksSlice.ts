@@ -193,6 +193,27 @@ export const addPhoto = createAsyncThunk<TaskThunkResult, { id: string; photoUrl
   }
 );
 
+export const removePhoto = createAsyncThunk<TaskThunkResult, { id: string; photoUrl: string; employee?: string; employeeId?: string }, { rejectValue: TaskThunkError }>(
+  'tasks/removePhoto',
+  async ({ id, photoUrl, employee, employeeId }: { id: string; photoUrl: string; employee?: string; employeeId?: string }, { rejectWithValue }) => {
+    try {
+      const res = await fetch(`/api/tasks/${id}/photos`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: photoUrl, employee, employeeId }),
+      });
+      const { payload, message } = await readResponsePayload(res, 'Failed to remove photo');
+      const taskPayload = payload && typeof payload === 'object' && 'task' in payload && (payload as { task?: Task }).task
+        ? (payload as { task: Task }).task
+        : (payload as Task);
+      return { task: taskPayload, message: message || undefined };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to remove photo';
+      return rejectWithValue({ message });
+    }
+  }
+);
+
 const tasksSlice = createSlice({
   name: 'tasks',
   initialState,
@@ -230,6 +251,10 @@ const tasksSlice = createSlice({
         if (idx !== -1) state.items[idx] = action.payload.task;
       })
       .addCase(addPhoto.fulfilled, (state, action) => {
+        const idx = state.items.findIndex((t) => t._id === action.payload.task._id);
+        if (idx !== -1) state.items[idx] = action.payload.task;
+      })
+      .addCase(removePhoto.fulfilled, (state, action) => {
         const idx = state.items.findIndex((t) => t._id === action.payload.task._id);
         if (idx !== -1) state.items[idx] = action.payload.task;
       });
