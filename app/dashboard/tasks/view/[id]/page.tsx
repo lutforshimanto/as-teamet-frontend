@@ -2,13 +2,94 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Clock3, ImageIcon, Loader2, User2 } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Clock3, ImageIcon, Loader2, User2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useAppSelector } from '@/lib/redux/hooks';
 import type { Task, User } from '@/lib/types';
+
+// --- Lightbox component ---
+function PhotoLightbox({
+  photos,
+  index,
+  onClose,
+  onIndexChange,
+}: {
+  photos: string[];
+  index: number;
+  onClose: () => void;
+  onIndexChange: (i: number) => void;
+}) {
+  const goPrev = () => onIndexChange((index - 1 + photos.length) % photos.length);
+  const goNext = () => onIndexChange((index + 1) % photos.length);
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowLeft') goPrev();
+      if (e.key === 'ArrowRight') goNext();
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+      onClick={onClose}
+    >
+      <button
+        className="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
+        onClick={onClose}
+        aria-label="Close"
+      >
+        <X className="h-5 w-5" />
+      </button>
+
+      {photos.length > 1 && (
+        <button
+          className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
+          onClick={(e) => {
+            e.stopPropagation();
+            goPrev();
+          }}
+          aria-label="Previous photo"
+        >
+          <ChevronLeft className="h-6 w-6" />
+        </button>
+      )}
+
+      <img
+        src={photos[index]}
+        alt={`Task photo ${index + 1}`}
+        className="max-h-[85vh] max-w-[85vw] rounded-lg object-contain"
+        onClick={(e) => e.stopPropagation()}
+      />
+
+      {photos.length > 1 && (
+        <button
+          className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
+          onClick={(e) => {
+            e.stopPropagation();
+            goNext();
+          }}
+          aria-label="Next photo"
+        >
+          <ChevronRight className="h-6 w-6" />
+        </button>
+      )}
+
+      {photos.length > 1 && (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-white/10 px-3 py-1 text-sm text-white">
+          {index + 1} / {photos.length}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function TaskViewPage() {
   const params = useParams<{ id: string }>();
@@ -18,6 +99,7 @@ export default function TaskViewPage() {
   const [task, setTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const loadTask = async () => {
@@ -190,10 +272,15 @@ export default function TaskViewPage() {
             <h3 className="font-medium">Photos</h3>
             {task.photos?.length ? (
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {task.photos.map((photo) => (
-                  <a key={photo} href={photo} target="_blank" rel="noreferrer" className="overflow-hidden rounded-lg border">
-                    <img src={photo} alt="Task photo" className="aspect-square w-full object-cover" />
-                  </a>
+                {task.photos.map((photo, index) => (
+                  <button
+                    key={photo}
+                    type="button"
+                    onClick={() => setLightboxIndex(index)}
+                    className="overflow-hidden rounded-lg border"
+                  >
+                    <img src={photo} alt="Task photo" className="aspect-square w-full object-cover transition hover:opacity-80" />
+                  </button>
                 ))}
               </div>
             ) : (
@@ -202,6 +289,15 @@ export default function TaskViewPage() {
           </div>
         </CardContent>
       </Card>
+
+      {lightboxIndex !== null && task.photos && (
+        <PhotoLightbox
+          photos={task.photos}
+          index={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+          onIndexChange={setLightboxIndex}
+        />
+      )}
     </div>
   );
 }
