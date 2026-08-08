@@ -138,7 +138,10 @@ export default function TaskViewPage() {
         });
 
         if (!res.ok) {
-          throw new Error("Failed to load task details");
+          // Surface the server's actual reason (e.g. "You are not assigned
+          // to this task" for a 403) instead of a generic message.
+          const body = await res.json().catch(() => null);
+          throw new Error(body?.message || "Failed to load task details");
         }
 
         const data = await res.json();
@@ -197,6 +200,24 @@ export default function TaskViewPage() {
       </div>
     );
   };
+
+  // assignedEmployees comes populated from the backend as
+  // { _id, name, employeeId, speciality } objects. Fall back to treating
+  // it as a raw id string in case it's ever unpopulated.
+  const renderAssignedEmployeeLabel = (
+    emp: Task["assignedEmployees"][number],
+  ) => {
+    if (typeof emp === "string") {
+      return emp;
+    }
+    const base = `${emp.name} (${emp.employeeId})`;
+    return emp.speciality ? `${base} · ${emp.speciality}` : base;
+  };
+
+  const assignedEmployeeKey = (
+    emp: Task["assignedEmployees"][number],
+    index: number,
+  ) => (typeof emp === "string" ? emp : (emp._id ?? index));
 
   if (loading) {
     return (
@@ -267,9 +288,15 @@ export default function TaskViewPage() {
             <div className="rounded-lg border p-4">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <User2 className="h-4 w-4" />
-                Employees needed
+                Employees
               </div>
-              <p className="mt-2 text-2xl font-semibold">{task.numEmployees}</p>
+              <p className="mt-2 text-2xl font-semibold">
+                {task.assignedEmployees?.length || 0}
+                <span className="text-base font-normal text-muted-foreground">
+                  {" "}
+                  / {task.numEmployees}
+                </span>
+              </p>
             </div>
             <div className="rounded-lg border p-4">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -280,6 +307,30 @@ export default function TaskViewPage() {
                 {task.photos?.length || 0}
               </p>
             </div>
+          </div>
+
+          <Separator />
+
+          <div className="space-y-3">
+            <h3 className="font-medium">Assigned employees</h3>
+            {task.assignedEmployees?.length ? (
+              <div className="flex flex-wrap gap-2">
+                {task.assignedEmployees.map((emp, index) => (
+                  <Badge
+                    key={assignedEmployeeKey(emp, index)}
+                    variant="outline"
+                    className="px-3 py-1.5 text-sm font-normal"
+                  >
+                    <User2 className="mr-1.5 h-3.5 w-3.5" />
+                    {renderAssignedEmployeeLabel(emp)}
+                  </Badge>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No employees assigned yet.
+              </p>
+            )}
           </div>
 
           <Separator />
