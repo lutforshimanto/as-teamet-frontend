@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +33,7 @@ const navItems = [
   { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
   { href: '/dashboard/tasks', label: 'Tasks', icon: ListTodo },
   { href: '/dashboard/clients', label: 'Clients', icon: Building2 },
+  { href: '/dashboard/profile', label: 'My Profile', icon: UserIcon },
   { href: '/dashboard/users', label: 'Users', icon: Users, adminOnly: true },
 ];
 
@@ -88,10 +89,11 @@ function UserMenu() {
       <DropdownMenuTrigger asChild>
         <button className="flex items-center gap-2 rounded-lg p-1.5 transition-colors hover:bg-secondary">
           <Avatar className="h-8 w-8">
-            <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
-              {user.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
-            </AvatarFallback>
-          </Avatar>
+  {user.imageUrl ? <AvatarImage src={user.imageUrl} alt={user.name} /> : null}
+  <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+    {user.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+  </AvatarFallback>
+</Avatar>
           <div className="hidden text-left sm:block">
             <p className="text-sm font-medium leading-none">{user.name}</p>
             <p className="text-xs text-muted-foreground capitalize">{user.role}</p>

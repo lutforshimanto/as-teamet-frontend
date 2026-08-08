@@ -16,6 +16,7 @@ export interface User {
   phone?: string;
   role: Role;
   speciality?: string;
+  imageUrl?: string;
 }
 
 export interface Client {
@@ -41,6 +42,7 @@ export interface AssignedEmployee {
   name: string;
   employeeId: string;
   speciality?: string;
+  imageUrl?: string;
 }
 
 export interface Task {

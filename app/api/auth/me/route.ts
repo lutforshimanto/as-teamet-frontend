@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { serverFetch } from '@/lib/server-api';
 
 export async function GET() {
@@ -8,6 +7,20 @@ export async function GET() {
     return NextResponse.json(user);
   } catch {
     return NextResponse.json({ message: 'Not authenticated' }, { status: 401 });
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const body = await request.json();
+    const user = await serverFetch('/users/me', {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+    return NextResponse.json(user);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Failed to update profile';
+    return NextResponse.json({ message }, { status: 400 });
   }
 }
 
