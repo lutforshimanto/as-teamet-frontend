@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useState } from 'react';
-import imageCompression from 'browser-image-compression';
-import { Button } from '@/components/ui/button';
-import { Loader2, Trash2, UploadCloud } from 'lucide-react';
+import { useCallback, useState } from "react";
+import imageCompression from "browser-image-compression";
+import { Button } from "@/components/ui/button";
+import { Loader2, Trash2, UploadCloud } from "lucide-react";
 
 interface UploadedImage {
   url: string;
@@ -43,38 +43,38 @@ export default function ImageUploader({
 
   const uploadSingleFile = async (file: File) => {
     const compressedFile = await compressImage(file);
-    const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+    const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
     const key = `images/${Date.now()}-${userId}-${taskId}.${extension}`;
 
     const formData = new FormData();
-    formData.append('file', compressedFile);
-    formData.append('key', key);
+    formData.append("file", compressedFile);
+    formData.append("key", key);
 
-    const r2Res = await fetch('/api/upload', {
-      method: 'POST',
+    const r2Res = await fetch("/api/upload", {
+      method: "POST",
       body: formData,
     });
 
     const r2Data = await r2Res.json();
     if (!r2Data.success) {
-      throw new Error(r2Data.error || 'Failed to upload to R2');
+      throw new Error(r2Data.error || "Failed to upload to R2");
     }
 
     const backendUrl = baseUrl
-      ? `${baseUrl.replace(/\/$/, '')}/api/tasks/${taskId}/photos`
+      ? `${baseUrl.replace(/\/$/, "")}/api/tasks/${taskId}/photos`
       : `/api/tasks/${taskId}/photos`;
 
     const backendRes = await fetch(backendUrl, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify({ url: r2Data.url }),
     });
 
     if (!backendRes.ok) {
-      throw new Error('Failed to save photo to backend');
+      throw new Error("Failed to save photo to backend");
     }
 
     return {
@@ -84,41 +84,47 @@ export default function ImageUploader({
     } satisfies UploadedImage;
   };
 
-  const handleFiles = useCallback(async (files: FileList | File[]) => {
-    const imageFiles = Array.from(files).filter((file) => file.type.startsWith('image/'));
+  const handleFiles = useCallback(
+    async (files: FileList | File[]) => {
+      const imageFiles = Array.from(files).filter((file) =>
+        file.type.startsWith("image/"),
+      );
 
-    if (imageFiles.length === 0) {
-      setError('Please select only image files');
-      return;
-    }
-
-    setUploading(true);
-    setProgress(0);
-    setError(null);
-
-    const total = imageFiles.length;
-    let completed = 0;
-    const results: UploadedImage[] = [];
-
-    try {
-      for (const file of imageFiles) {
-        const result = await uploadSingleFile(file);
-        results.push(result);
-        completed += 1;
-        setProgress(Math.round((completed / total) * 100));
+      if (imageFiles.length === 0) {
+        setError("Please select only image files");
+        return;
       }
 
-      setUploadedImages((prev) => [...prev, ...results]);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Something went wrong';
-      setError(message);
-    } finally {
-      setUploading(false);
-    }
-  }, [taskId, token, userId]);
+      setUploading(true);
+      setProgress(0);
+      setError(null);
+
+      const total = imageFiles.length;
+      let completed = 0;
+      const results: UploadedImage[] = [];
+
+      try {
+        for (const file of imageFiles) {
+          const result = await uploadSingleFile(file);
+          results.push(result);
+          completed += 1;
+          setProgress(Math.round((completed / total) * 100));
+        }
+
+        setUploadedImages((prev) => [...prev, ...results]);
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Something went wrong";
+        setError(message);
+      } finally {
+        setUploading(false);
+      }
+    },
+    [taskId, token, userId],
+  );
 
   const handleDelete = async (image: UploadedImage) => {
-    if (!window.confirm('Are you sure you want to delete this image?')) {
+    if (!window.confirm("Are you sure you want to delete this image?")) {
       return;
     }
 
@@ -126,37 +132,39 @@ export default function ImageUploader({
     setError(null);
 
     try {
-      const deleteRes = await fetch('/api/delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const deleteRes = await fetch("/api/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ key: image.key }),
       });
 
       const deleteData = await deleteRes.json();
       if (!deleteData.success) {
-        throw new Error(deleteData.error || 'Failed to delete image from storage');
+        throw new Error(
+          deleteData.error || "Failed to delete image from storage",
+        );
       }
 
       const backendUrl = baseUrl
-        ? `${baseUrl.replace(/\/$/, '')}/api/tasks/${taskId}/photos`
+        ? `${baseUrl.replace(/\/$/, "")}/api/tasks/${taskId}/photos`
         : `/api/tasks/${taskId}/photos`;
 
       const backendRes = await fetch(backendUrl, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ url: image.url }),
       });
 
       if (!backendRes.ok) {
-        throw new Error('Failed to remove image from task');
+        throw new Error("Failed to remove image from task");
       }
 
       setUploadedImages((prev) => prev.filter((img) => img.key !== image.key));
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Delete failed';
+      const message = err instanceof Error ? err.message : "Delete failed";
       setError(message);
     } finally {
       setDeletingKey(null);
@@ -171,7 +179,7 @@ export default function ImageUploader({
         void handleFiles(event.dataTransfer.files);
       }
     },
-    [handleFiles]
+    [handleFiles],
   );
 
   return (
@@ -184,15 +192,14 @@ export default function ImageUploader({
         }}
         onDragLeave={() => setIsDragging(false)}
         className={`rounded-2xl border-2 border-dashed p-8 text-center transition-all ${
-          isDragging ? 'border-primary bg-primary/5' : 'border-border'
-        } ${uploading ? 'pointer-events-none opacity-60' : ''}`}
+          isDragging ? "border-primary bg-primary/5" : "border-border"
+        } ${uploading ? "pointer-events-none opacity-60" : ""}`}
       >
         <input
           id="image-upload"
           type="file"
           accept="image/jpeg,image/png,image/webp,image/gif"
           multiple
-          capture="environment"
           onChange={(event) => {
             if (event.target.files) {
               void handleFiles(event.target.files);
@@ -201,15 +208,22 @@ export default function ImageUploader({
           className="hidden"
           disabled={uploading}
         />
-        <label htmlFor="image-upload" className="flex cursor-pointer flex-col items-center gap-3">
+        <label
+          htmlFor="image-upload"
+          className="flex cursor-pointer flex-col items-center gap-3"
+        >
           <div className="rounded-full bg-muted p-4">
             <UploadCloud className="h-8 w-8 text-muted-foreground" />
           </div>
           <div className="space-y-1">
             <p className="text-base font-medium">
-              {isDragging ? 'Drop images here' : 'Tap to take a photo or choose files'}
+              {isDragging
+                ? "Drop images here"
+                : "Tap to take a photo or choose files"}
             </p>
-            <p className="text-sm text-muted-foreground">JPG, PNG, WebP, and GIF up to 5MB each</p>
+            <p className="text-sm text-muted-foreground">
+              JPG, PNG, WebP, and GIF up to 5MB each
+            </p>
           </div>
         </label>
       </div>
@@ -222,7 +236,9 @@ export default function ImageUploader({
               style={{ width: `${progress}%` }}
             />
           </div>
-          <p className="text-center text-sm text-muted-foreground">Uploading... {progress}%</p>
+          <p className="text-center text-sm text-muted-foreground">
+            Uploading... {progress}%
+          </p>
         </div>
       )}
 
@@ -240,8 +256,15 @@ export default function ImageUploader({
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {uploadedImages.map((img) => (
-              <div key={img.key} className="group relative overflow-hidden rounded-xl border bg-background">
-                <img src={img.url} alt={img.name} className="aspect-square w-full object-cover" />
+              <div
+                key={img.key}
+                className="group relative overflow-hidden rounded-xl border bg-background"
+              >
+                <img
+                  src={img.url}
+                  alt={img.name}
+                  className="aspect-square w-full object-cover"
+                />
                 <Button
                   type="button"
                   size="sm"
@@ -250,7 +273,11 @@ export default function ImageUploader({
                   onClick={() => void handleDelete(img)}
                   disabled={deletingKey === img.key}
                 >
-                  {deletingKey === img.key ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                  {deletingKey === img.key ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
                 </Button>
               </div>
             ))}

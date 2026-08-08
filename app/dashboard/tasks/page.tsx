@@ -1,16 +1,18 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Plus, Filter, CalendarDays, ListTodo, Loader2, Eye } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+  Plus,
+  Filter,
+  CalendarDays,
+  ListTodo,
+  Loader2,
+  Eye,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -18,21 +20,17 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
-import { Skeleton } from '@/components/ui/skeleton';
-import { StatusBadge } from '@/components/dashboard/status-badge';
-import { TaskFormDialog } from '@/components/dashboard/task-form-dialog';
-import { TaskProgressDialog } from '@/components/dashboard/task-progress-dialog';
-import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
-import { fetchClients } from '@/lib/redux/slices/clientsSlice';
-import { fetchTasks, setFilter } from '@/lib/redux/slices/tasksSlice';
-import { fetchUsers, fetchUserDirectory } from '@/lib/redux/slices/usersSlice';
-import type { Task } from '@/lib/types';
+} from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
+import { StatusBadge } from "@/components/dashboard/status-badge";
+import { TaskFormDialog } from "@/components/dashboard/task-form-dialog";
+import { TaskProgressDialog } from "@/components/dashboard/task-progress-dialog";
+import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
+import { fetchClients } from "@/lib/redux/slices/clientsSlice";
+import { fetchTasks, setFilter } from "@/lib/redux/slices/tasksSlice";
+import { fetchUsers, fetchUserDirectory } from "@/lib/redux/slices/usersSlice";
+import type { Task } from "@/lib/types";
 
 export default function TasksPage() {
   const dispatch = useAppDispatch();
@@ -44,7 +42,7 @@ export default function TasksPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [progressTask, setProgressTask] = useState<Task | null>(null);
 
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === "admin";
 
   useEffect(() => {
     // Admins get full user records (needed by TaskFormDialog to assign
@@ -60,11 +58,11 @@ export default function TasksPage() {
     dispatch(fetchClients());
 
     const now = new Date();
-    const monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    if (filter === 'month') {
+    const monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    if (filter === "month") {
       dispatch(fetchTasks({ month: monthStr }));
-    } else if (filter === 'today') {
-      const today = new Date().toISOString().split('T')[0];
+    } else if (filter === "today") {
+      const today = new Date().toISOString().split("T")[0];
       dispatch(fetchTasks({ startDate: today, endDate: today }));
     } else {
       dispatch(fetchTasks());
@@ -81,7 +79,9 @@ export default function TasksPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Tasks</h1>
           <p className="text-sm text-muted-foreground">
-            {isAdmin ? 'Manage all tasks' : 'View and update your assigned tasks'}
+            {isAdmin
+              ? "Manage all tasks"
+              : "View and update your assigned tasks"}
           </p>
         </div>
         {isAdmin && (
@@ -112,12 +112,18 @@ export default function TasksPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">
-            {filter === 'today' ? "Today's Tasks" : filter === 'month' ? 'This Month' : 'All Tasks'}
-            <Badge variant="secondary" className="ml-2">{tasks.length}</Badge>
+            {filter === "today"
+              ? "Today's Tasks"
+              : filter === "month"
+                ? "This Month"
+                : "All Tasks"}
+            <Badge variant="secondary" className="ml-2">
+              {tasks.length}
+            </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {status === 'loading' || status === 'idle' ? (
+          {status === "loading" || status === "idle" ? (
             <div className="space-y-3">
               {[1, 2, 3, 4, 5].map((i) => (
                 <Skeleton key={i} className="h-14 w-full" />
@@ -145,26 +151,34 @@ export default function TasksPage() {
                     {tasks.map((task) => (
                       <TableRow key={task._id}>
                         <TableCell className="font-medium capitalize">
-                          {task.taskType.replace('-', ' ')}
+                          {task.taskType.replace("-", " ")}
                         </TableCell>
                         <TableCell>
                           <div>
                             <p className="text-sm font-medium">
-                              {typeof task.client === 'string' ? 'Client selected' : task.client.name}
+                              {typeof task.client === "string"
+                                ? "Client selected"
+                                : task.client.name}
                             </p>
-                            {typeof task.client !== 'string' && (
-                              <p className="text-xs text-muted-foreground">{task.client.address}</p>
+                            {typeof task.client !== "string" && (
+                              <p className="text-xs text-muted-foreground">
+                                {task.client.address}
+                              </p>
                             )}
                           </div>
                         </TableCell>
                         <TableCell>{task.numEmployees}</TableCell>
-                        <TableCell><StatusBadge status={task.status} /></TableCell>
+                        <TableCell>
+                          <StatusBadge status={task.status} />
+                        </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => router.push(`/dashboard/tasks/view/${task._id}`)}
+                              onClick={() =>
+                                router.push(`/dashboard/tasks/view/${task._id}`)
+                              }
                             >
                               <Eye className="mr-2 h-4 w-4" />
                               View
@@ -174,7 +188,7 @@ export default function TasksPage() {
                               size="sm"
                               onClick={() => setProgressTask(task)}
                             >
-                              {isAdmin ? 'Edit' : 'Update'}
+                              {isAdmin ? "Edit" : "Update"}
                             </Button>
                           </div>
                         </TableCell>
@@ -187,15 +201,16 @@ export default function TasksPage() {
               {/* Mobile cards */}
               <div className="space-y-3 md:hidden">
                 {tasks.map((task) => (
-                  <div
-                    key={task._id}
-                    className="rounded-lg border p-4"
-                  >
+                  <div key={task._id} className="rounded-lg border p-4">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium capitalize">{task.taskType.replace('-', ' ')}</p>
+                        <p className="font-medium capitalize">
+                          {task.taskType.replace("-", " ")}
+                        </p>
                         <p className="mt-0.5 truncate text-sm text-muted-foreground">
-                          {typeof task.client === 'string' ? 'Client selected' : task.client.name}
+                          {typeof task.client === "string"
+                            ? "Client selected"
+                            : task.client.name}
                         </p>
                       </div>
                       <StatusBadge status={task.status} />
@@ -208,7 +223,9 @@ export default function TasksPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => router.push(`/dashboard/tasks/view/${task._id}`)}
+                          onClick={() =>
+                            router.push(`/dashboard/tasks/view/${task._id}`)
+                          }
                         >
                           <Eye className="mr-2 h-4 w-4" />
                           View
@@ -218,7 +235,7 @@ export default function TasksPage() {
                           size="sm"
                           onClick={() => setProgressTask(task)}
                         >
-                          {isAdmin ? 'Edit' : 'Update'}
+                          {isAdmin ? "Edit" : "Update"}
                         </Button>
                       </div>
                     </div>
@@ -231,7 +248,12 @@ export default function TasksPage() {
       </Card>
 
       {isAdmin && (
-        <TaskFormDialog open={createOpen} onOpenChange={setCreateOpen} clients={clients} users={users} />
+        <TaskFormDialog
+          open={createOpen}
+          onOpenChange={setCreateOpen}
+          clients={clients}
+          users={users}
+        />
       )}
 
       {progressTask && (

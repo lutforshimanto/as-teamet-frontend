@@ -1,15 +1,18 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { Plus, Loader2, Pencil, Trash2, Building2, Phone, MapPin } from 'lucide-react';
+import { useEffect, useState } from "react";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+  Plus,
+  Loader2,
+  Pencil,
+  Trash2,
+  Building2,
+  Phone,
+  MapPin,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -17,7 +20,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,27 +30,27 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useToast } from '@/hooks/use-toast';
-import { useForm, Controller } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
+} from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
+import { useForm, Controller } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import {
   fetchClients,
   createClient,
   updateClient,
   deleteClient,
-} from '@/lib/redux/slices/clientsSlice';
-import type { Client } from '@/lib/types';
+} from "@/lib/redux/slices/clientsSlice";
+import type { Client } from "@/lib/types";
 
 const schema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  address: z.string().min(1, 'Address is required'),
-  phone: z.string().min(1, 'Phone is required'),
+  name: z.string().min(1, "Name is required"),
+  address: z.string().min(1, "Address is required"),
+  phone: z.string().min(1, "Phone is required"),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -61,7 +64,7 @@ export default function ClientsPage() {
   const [editClient, setEditClient] = useState<Client | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === "admin";
 
   const {
     control,
@@ -70,7 +73,7 @@ export default function ClientsPage() {
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { name: '', address: '', phone: '' },
+    defaultValues: { name: "", address: "", phone: "" },
   });
 
   useEffect(() => {
@@ -78,7 +81,7 @@ export default function ClientsPage() {
   }, [dispatch]);
 
   const openCreate = () => {
-    reset({ name: '', address: '', phone: '' });
+    reset({ name: "", address: "", phone: "" });
     setCreateOpen(true);
   };
 
@@ -90,12 +93,16 @@ export default function ClientsPage() {
   const onCreate = async (data: FormData) => {
     try {
       await dispatch(createClient(data)).unwrap();
-      toast({ title: 'Client created', description: `${data.name} has been added.` });
+      toast({
+        title: "Client created",
+        description: `${data.name} has been added.`,
+      });
       reset();
       setCreateOpen(false);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to create client';
-      toast({ variant: 'destructive', title: 'Error', description: message });
+      const message =
+        err instanceof Error ? err.message : "Failed to create client";
+      toast({ variant: "destructive", title: "Error", description: message });
     }
   };
 
@@ -103,11 +110,15 @@ export default function ClientsPage() {
     if (!editClient) return;
     try {
       await dispatch(updateClient({ id: editClient._id, data })).unwrap();
-      toast({ title: 'Client updated', description: 'Changes have been saved.' });
+      toast({
+        title: "Client updated",
+        description: "Changes have been saved.",
+      });
       setEditClient(null);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to update client';
-      toast({ variant: 'destructive', title: 'Error', description: message });
+      const message =
+        err instanceof Error ? err.message : "Failed to update client";
+      toast({ variant: "destructive", title: "Error", description: message });
     }
   };
 
@@ -115,10 +126,14 @@ export default function ClientsPage() {
     if (!deleteId) return;
     try {
       await dispatch(deleteClient(deleteId)).unwrap();
-      toast({ title: 'Client deleted', description: 'The client has been removed.' });
+      toast({
+        title: "Client deleted",
+        description: "The client has been removed.",
+      });
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to delete client';
-      toast({ variant: 'destructive', title: 'Error', description: message });
+      const message =
+        err instanceof Error ? err.message : "Failed to delete client";
+      toast({ variant: "destructive", title: "Error", description: message });
     }
     setDeleteId(null);
   };
@@ -129,7 +144,7 @@ export default function ClientsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Clients</h1>
           <p className="text-sm text-muted-foreground">
-            {isAdmin ? 'Manage your clients' : 'View client directory'}
+            {isAdmin ? "Manage your clients" : "View client directory"}
           </p>
         </div>
         {isAdmin && (
@@ -140,7 +155,7 @@ export default function ClientsPage() {
         )}
       </div>
 
-      {status === 'loading' || status === 'idle' ? (
+      {status === "loading" || status === "idle" ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <Skeleton key={i} className="h-40 w-full" />
@@ -178,7 +193,12 @@ export default function ClientsPage() {
               </CardContent>
               {isAdmin && (
                 <div className="flex gap-2 border-t px-5 py-3">
-                  <Button variant="outline" size="sm" className="flex-1" onClick={() => openEdit(client)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => openEdit(client)}
+                  >
                     <Pencil className="mr-1.5 h-3.5 w-3.5" />
                     Edit
                   </Button>
@@ -207,7 +227,12 @@ export default function ClientsPage() {
           <form onSubmit={handleSubmit(onCreate)} className="space-y-4">
             <ClientFormFields control={control} errors={errors} />
             <DialogFooter className="pt-4">
-              <Button type="button" variant="outline" onClick={() => setCreateOpen(false)} disabled={isSubmitting}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setCreateOpen(false)}
+                disabled={isSubmitting}
+              >
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
@@ -217,7 +242,7 @@ export default function ClientsPage() {
                     Saving...
                   </>
                 ) : (
-                  'Create Client'
+                  "Create Client"
                 )}
               </Button>
             </DialogFooter>
@@ -226,7 +251,10 @@ export default function ClientsPage() {
       </Dialog>
 
       {/* Edit dialog */}
-      <Dialog open={!!editClient} onOpenChange={(open) => !open && setEditClient(null)}>
+      <Dialog
+        open={!!editClient}
+        onOpenChange={(open) => !open && setEditClient(null)}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Edit Client</DialogTitle>
@@ -235,7 +263,12 @@ export default function ClientsPage() {
           <form onSubmit={handleSubmit(onEdit)} className="space-y-4">
             <ClientFormFields control={control} errors={errors} />
             <DialogFooter className="pt-4">
-              <Button type="button" variant="outline" onClick={() => setEditClient(null)} disabled={isSubmitting}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditClient(null)}
+                disabled={isSubmitting}
+              >
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
@@ -245,7 +278,7 @@ export default function ClientsPage() {
                     Saving...
                   </>
                 ) : (
-                  'Save Changes'
+                  "Save Changes"
                 )}
               </Button>
             </DialogFooter>
@@ -254,12 +287,16 @@ export default function ClientsPage() {
       </Dialog>
 
       {/* Delete confirmation */}
-      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+      <AlertDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete this client?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. The client will be permanently removed.
+              This action cannot be undone. The client will be permanently
+              removed.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -285,27 +322,39 @@ function ClientFormFields({ control, errors }: { control: any; errors: any }) {
         <Controller
           name="name"
           control={control}
-          render={({ field }) => <Input placeholder="Company or person name" {...field} />}
+          render={({ field }) => (
+            <Input placeholder="Company or person name" {...field} />
+          )}
         />
-        {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+        {errors.name && (
+          <p className="text-sm text-destructive">{errors.name.message}</p>
+        )}
       </div>
       <div className="space-y-2">
         <Label htmlFor="address">Address</Label>
         <Controller
           name="address"
           control={control}
-          render={({ field }) => <Input placeholder="Full address" {...field} />}
+          render={({ field }) => (
+            <Input placeholder="Full address" {...field} />
+          )}
         />
-        {errors.address && <p className="text-sm text-destructive">{errors.address.message}</p>}
+        {errors.address && (
+          <p className="text-sm text-destructive">{errors.address.message}</p>
+        )}
       </div>
       <div className="space-y-2">
         <Label htmlFor="phone">Phone</Label>
         <Controller
           name="phone"
           control={control}
-          render={({ field }) => <Input placeholder="+45 12 34 56 78" {...field} />}
+          render={({ field }) => (
+            <Input placeholder="+45 12 34 56 78" {...field} />
+          )}
         />
-        {errors.phone && <p className="text-sm text-destructive">{errors.phone.message}</p>}
+        {errors.phone && (
+          <p className="text-sm text-destructive">{errors.phone.message}</p>
+        )}
       </div>
     </>
   );

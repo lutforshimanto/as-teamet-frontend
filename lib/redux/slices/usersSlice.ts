@@ -1,88 +1,103 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import type { User } from '@/lib/types';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import type { User } from "@/lib/types";
 
 interface UsersState {
   items: User[];
-  status: 'idle' | 'loading' | 'succeeded' | 'failed';
+  status: "idle" | "loading" | "succeeded" | "failed";
   error: string | null;
 }
 
-const initialState: UsersState = { items: [], status: 'idle', error: null };
+const initialState: UsersState = { items: [], status: "idle", error: null };
 
 // Admin-only: full user records (role, address, phone, etc).
 // Will 403 for non-admin accounts — only dispatch this from admin-gated UI.
-export const fetchUsers = createAsyncThunk('users/fetchUsers', async () => {
-  const res = await fetch('/api/users');
-  if (!res.ok) throw new Error('Failed to fetch users');
+export const fetchUsers = createAsyncThunk("users/fetchUsers", async () => {
+  const res = await fetch("/api/users");
+  if (!res.ok) throw new Error("Failed to fetch users");
   return (await res.json()) as User[];
 });
 
 // Any logged-in user: minimal fields (name, employeeId, _id) only.
 // Safe to dispatch from any page that just needs to resolve employee labels.
-export const fetchUserDirectory = createAsyncThunk('users/fetchUserDirectory', async () => {
-  const res = await fetch('/api/users/directory');
-  if (!res.ok) throw new Error('Failed to fetch user directory');
-  return (await res.json()) as User[];
-});
+export const fetchUserDirectory = createAsyncThunk(
+  "users/fetchUserDirectory",
+  async () => {
+    const res = await fetch("/api/users/directory");
+    if (!res.ok) throw new Error("Failed to fetch user directory");
+    return (await res.json()) as User[];
+  },
+);
 
 export const createUser = createAsyncThunk(
-  'users/createUser',
-  async (user: { name: string; employeeId: string; address?: string; phone?: string; role: string; speciality?: string; password: string }) => {
-    const res = await fetch('/api/auth/signup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+  "users/createUser",
+  async (user: {
+    name: string;
+    employeeId: string;
+    address?: string;
+    phone?: string;
+    role: string;
+    speciality?: string;
+    password: string;
+  }) => {
+    const res = await fetch("/api/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(user),
     });
-    if (!res.ok) throw new Error('Failed to create user');
+    if (!res.ok) throw new Error("Failed to create user");
     return (await res.json()) as User;
-  }
+  },
 );
 
 export const updateUser = createAsyncThunk(
-  'users/updateUser',
+  "users/updateUser",
   async ({ id, data }: { id: string; data: Partial<User> }) => {
     const res = await fetch(`/api/users/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error('Failed to update user');
+    if (!res.ok) throw new Error("Failed to update user");
     return (await res.json()) as User;
-  }
+  },
 );
 
 export const deleteUser = createAsyncThunk(
-  'users/deleteUser',
+  "users/deleteUser",
   async (id: string) => {
-    const res = await fetch(`/api/users/${id}`, { method: 'DELETE' });
-    if (!res.ok) throw new Error('Failed to delete user');
+    const res = await fetch(`/api/users/${id}`, { method: "DELETE" });
+    if (!res.ok) throw new Error("Failed to delete user");
     return id;
-  }
+  },
 );
 
 const usersSlice = createSlice({
-  name: 'users',
+  name: "users",
   initialState,
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(fetchUsers.pending, (state) => { state.status = 'loading'; })
+      .addCase(fetchUsers.pending, (state) => {
+        state.status = "loading";
+      })
       .addCase(fetchUsers.fulfilled, (state, action) => {
-        state.status = 'succeeded';
+        state.status = "succeeded";
         state.items = action.payload;
       })
       .addCase(fetchUsers.rejected, (state, action) => {
-        state.status = 'failed';
-        state.error = action.error.message || 'Failed';
+        state.status = "failed";
+        state.error = action.error.message || "Failed";
       })
-      .addCase(fetchUserDirectory.pending, (state) => { state.status = 'loading'; })
+      .addCase(fetchUserDirectory.pending, (state) => {
+        state.status = "loading";
+      })
       .addCase(fetchUserDirectory.fulfilled, (state, action) => {
-        state.status = 'succeeded';
+        state.status = "succeeded";
         state.items = action.payload;
       })
       .addCase(fetchUserDirectory.rejected, (state, action) => {
-        state.status = 'failed';
-        state.error = action.error.message || 'Failed';
+        state.status = "failed";
+        state.error = action.error.message || "Failed";
       })
       .addCase(createUser.fulfilled, (state, action) => {
         state.items.push(action.payload);

@@ -1,17 +1,30 @@
-'use client';
+"use client";
 
-import { useRef, useState } from 'react';
-import imageCompression from 'browser-image-compression';
-import { Loader2, Save, KeyRound, CheckCircle2, AlertCircle, Camera } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
-import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
-import { setUser } from '@/lib/redux/slices/authSlice';
+import { useRef, useState } from "react";
+import imageCompression from "browser-image-compression";
+import {
+  Loader2,
+  Save,
+  KeyRound,
+  CheckCircle2,
+  AlertCircle,
+  Camera,
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
+import { setUser } from "@/lib/redux/slices/authSlice";
 
 export default function ProfilePage() {
   const dispatch = useAppDispatch();
@@ -19,20 +32,32 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({
-    name: user?.name || '',
-    address: user?.address || '',
-    phone: user?.phone || '',
-    speciality: user?.speciality || '',
+    name: user?.name || "",
+    address: user?.address || "",
+    phone: user?.phone || "",
+    speciality: user?.speciality || "",
   });
   const [savingProfile, setSavingProfile] = useState(false);
-  const [profileMsg, setProfileMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [profileMsg, setProfileMsg] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
-  const [passwordForm, setPasswordForm] = useState({ password: '', confirmPassword: '' });
+  const [passwordForm, setPasswordForm] = useState({
+    password: "",
+    confirmPassword: "",
+  });
   const [savingPassword, setSavingPassword] = useState(false);
-  const [passwordMsg, setPasswordMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [passwordMsg, setPasswordMsg] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
-  const [photoMsg, setPhotoMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [photoMsg, setPhotoMsg] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   if (!user) {
     return (
@@ -43,25 +68,25 @@ export default function ProfilePage() {
   }
 
   const authHeaders: HeadersInit = {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 
   const initials = user.name
-    .split(' ')
+    .split(" ")
     .map((n) => n[0])
-    .join('')
+    .join("")
     .slice(0, 2)
     .toUpperCase();
 
   // --- Avatar upload (only touches imageUrl) ---
   const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    e.target.value = '';
+    e.target.value = "";
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      setPhotoMsg({ type: 'error', text: 'Please select an image file' });
+    if (!file.type.startsWith("image/")) {
+      setPhotoMsg({ type: "error", text: "Please select an image file" });
       return;
     }
 
@@ -78,45 +103,49 @@ export default function ProfilePage() {
         useWebWorker: true,
       });
 
-      const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+      const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
       const key = `images/${Date.now()}-${user._id}-avatar.${extension}`;
 
       const formData = new FormData();
-      formData.append('file', compressedFile);
-      formData.append('key', key);
+      formData.append("file", compressedFile);
+      formData.append("key", key);
 
-      const r2Res = await fetch('/api/upload', { method: 'POST', body: formData });
+      const r2Res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
       const r2Data = await r2Res.json();
       if (!r2Data.success) {
-        throw new Error(r2Data.error || 'Failed to upload image');
+        throw new Error(r2Data.error || "Failed to upload image");
       }
 
-      const backendRes = await fetch('/api/users/me', {
-        method: 'PATCH',
+      const backendRes = await fetch("/api/users/me", {
+        method: "PATCH",
         headers: authHeaders,
         body: JSON.stringify({ imageUrl: r2Data.url }), // ← only imageUrl
       });
       const backendData = await backendRes.json();
       if (!backendRes.ok) {
-        throw new Error(backendData.message || 'Failed to save profile photo');
+        throw new Error(backendData.message || "Failed to save profile photo");
       }
 
       dispatch(setUser(backendData));
-      
-      setPhotoMsg({ type: 'success', text: 'Profile photo updated.' });
+
+      setPhotoMsg({ type: "success", text: "Profile photo updated." });
     } catch (err) {
       setPhotoMsg({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to upload image',
+        type: "error",
+        text: err instanceof Error ? err.message : "Failed to upload image",
       });
     } finally {
       setUploadingPhoto(false);
     }
   };
 
-  const handleProfileChange = (field: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
-  };
+  const handleProfileChange =
+    (field: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      setForm((prev) => ({ ...prev, [field]: e.target.value }));
+    };
 
   // --- Profile details (never sends imageUrl) ---
   const handleProfileSubmit = async (e: React.FormEvent) => {
@@ -127,27 +156,27 @@ export default function ProfilePage() {
     setPasswordMsg(null);
 
     try {
-      const res = await fetch('/api/users/me', {
-        method: 'PATCH',
+      const res = await fetch("/api/users/me", {
+        method: "PATCH",
         headers: authHeaders,
         body: JSON.stringify(form), // only name / phone / address / speciality
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Failed to update profile');
+      if (!res.ok) throw new Error(data.message || "Failed to update profile");
 
       dispatch(setUser(data));
       // keep local form in sync in case backend normalises anything
       setForm({
-        name: data.name ?? '',
-        address: data.address ?? '',
-        phone: data.phone ?? '',
-        speciality: data.speciality ?? '',
+        name: data.name ?? "",
+        address: data.address ?? "",
+        phone: data.phone ?? "",
+        speciality: data.speciality ?? "",
       });
-      setProfileMsg({ type: 'success', text: 'Profile updated.' });
+      setProfileMsg({ type: "success", text: "Profile updated." });
     } catch (err) {
       setProfileMsg({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to update profile',
+        type: "error",
+        text: err instanceof Error ? err.message : "Failed to update profile",
       });
     } finally {
       setSavingProfile(false);
@@ -161,30 +190,33 @@ export default function ProfilePage() {
     setPhotoMsg(null);
 
     if (passwordForm.password.length < 6) {
-      setPasswordMsg({ type: 'error', text: 'Password must be at least 6 characters.' });
+      setPasswordMsg({
+        type: "error",
+        text: "Password must be at least 6 characters.",
+      });
       return;
     }
     if (passwordForm.password !== passwordForm.confirmPassword) {
-      setPasswordMsg({ type: 'error', text: 'Passwords do not match.' });
+      setPasswordMsg({ type: "error", text: "Passwords do not match." });
       return;
     }
 
     setSavingPassword(true);
     try {
-      const res = await fetch('/api/users/me', {
-        method: 'PATCH',
+      const res = await fetch("/api/users/me", {
+        method: "PATCH",
         headers: authHeaders,
         body: JSON.stringify({ password: passwordForm.password }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Failed to update password');
+      if (!res.ok) throw new Error(data.message || "Failed to update password");
 
-      setPasswordForm({ password: '', confirmPassword: '' });
-      setPasswordMsg({ type: 'success', text: 'Password updated.' });
+      setPasswordForm({ password: "", confirmPassword: "" });
+      setPasswordMsg({ type: "success", text: "Password updated." });
     } catch (err) {
       setPasswordMsg({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to update password',
+        type: "error",
+        text: err instanceof Error ? err.message : "Failed to update password",
       });
     } finally {
       setSavingPassword(false);
@@ -195,7 +227,9 @@ export default function ProfilePage() {
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">My Profile</h1>
-        <p className="text-sm text-muted-foreground">View and update your account information.</p>
+        <p className="text-sm text-muted-foreground">
+          View and update your account information.
+        </p>
       </div>
 
       {/* Identity header – photo only */}
@@ -209,7 +243,9 @@ export default function ProfilePage() {
             disabled={uploadingPhoto}
           >
             <Avatar className="h-16 w-16">
-              {user.imageUrl ? <AvatarImage src={user.imageUrl} alt={user.name} /> : null}
+              {user.imageUrl ? (
+                <AvatarImage src={user.imageUrl} alt={user.name} />
+              ) : null}
               <AvatarFallback className="bg-primary/10 text-lg font-semibold text-primary">
                 {initials}
               </AvatarFallback>
@@ -233,7 +269,9 @@ export default function ProfilePage() {
           <div>
             <p className="text-lg font-semibold">{user.name}</p>
             <p className="text-sm text-muted-foreground">{user.employeeId}</p>
-            <Badge variant="secondary" className="mt-1 capitalize">{user.role}</Badge>
+            <Badge variant="secondary" className="mt-1 capitalize">
+              {user.role}
+            </Badge>
           </div>
         </CardContent>
 
@@ -241,10 +279,12 @@ export default function ProfilePage() {
           <CardContent className="pt-0">
             <p
               className={`flex items-center gap-1.5 text-sm ${
-                photoMsg.type === 'success' ? 'text-emerald-600' : 'text-destructive'
+                photoMsg.type === "success"
+                  ? "text-emerald-600"
+                  : "text-destructive"
               }`}
             >
-              {photoMsg.type === 'success' ? (
+              {photoMsg.type === "success" ? (
                 <CheckCircle2 className="h-4 w-4" />
               ) : (
                 <AlertCircle className="h-4 w-4" />
@@ -259,36 +299,57 @@ export default function ProfilePage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Profile details</CardTitle>
-          <CardDescription>These are visible to your team in the directory.</CardDescription>
+          <CardDescription>
+            These are visible to your team in the directory.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleProfileSubmit} className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="name">Name</Label>
-                <Input id="name" value={form.name} onChange={handleProfileChange('name')} required />
+                <Input
+                  id="name"
+                  value={form.name}
+                  onChange={handleProfileChange("name")}
+                  required
+                />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="phone">Phone</Label>
-                <Input id="phone" value={form.phone} onChange={handleProfileChange('phone')} />
+                <Input
+                  id="phone"
+                  value={form.phone}
+                  onChange={handleProfileChange("phone")}
+                />
               </div>
               <div className="space-y-1.5 sm:col-span-2">
                 <Label htmlFor="address">Address</Label>
-                <Input id="address" value={form.address} onChange={handleProfileChange('address')} />
+                <Input
+                  id="address"
+                  value={form.address}
+                  onChange={handleProfileChange("address")}
+                />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="speciality">Speciality</Label>
-                <Input id="speciality" value={form.speciality} onChange={handleProfileChange('speciality')} />
+                <Input
+                  id="speciality"
+                  value={form.speciality}
+                  onChange={handleProfileChange("speciality")}
+                />
               </div>
             </div>
 
             {profileMsg && (
               <p
                 className={`flex items-center gap-1.5 text-sm ${
-                  profileMsg.type === 'success' ? 'text-emerald-600' : 'text-destructive'
+                  profileMsg.type === "success"
+                    ? "text-emerald-600"
+                    : "text-destructive"
                 }`}
               >
-                {profileMsg.type === 'success' ? (
+                {profileMsg.type === "success" ? (
                   <CheckCircle2 className="h-4 w-4" />
                 ) : (
                   <AlertCircle className="h-4 w-4" />
@@ -313,7 +374,9 @@ export default function ProfilePage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Change password</CardTitle>
-          <CardDescription>Choose a new password for your account.</CardDescription>
+          <CardDescription>
+            Choose a new password for your account.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handlePasswordSubmit} className="space-y-4">
@@ -324,7 +387,9 @@ export default function ProfilePage() {
                   id="password"
                   type="password"
                   value={passwordForm.password}
-                  onChange={(e) => setPasswordForm((p) => ({ ...p, password: e.target.value }))}
+                  onChange={(e) =>
+                    setPasswordForm((p) => ({ ...p, password: e.target.value }))
+                  }
                   required
                 />
               </div>
@@ -334,7 +399,12 @@ export default function ProfilePage() {
                   id="confirmPassword"
                   type="password"
                   value={passwordForm.confirmPassword}
-                  onChange={(e) => setPasswordForm((p) => ({ ...p, confirmPassword: e.target.value }))}
+                  onChange={(e) =>
+                    setPasswordForm((p) => ({
+                      ...p,
+                      confirmPassword: e.target.value,
+                    }))
+                  }
                   required
                 />
               </div>
@@ -343,10 +413,12 @@ export default function ProfilePage() {
             {passwordMsg && (
               <p
                 className={`flex items-center gap-1.5 text-sm ${
-                  passwordMsg.type === 'success' ? 'text-emerald-600' : 'text-destructive'
+                  passwordMsg.type === "success"
+                    ? "text-emerald-600"
+                    : "text-destructive"
                 }`}
               >
-                {passwordMsg.type === 'success' ? (
+                {passwordMsg.type === "success" ? (
                   <CheckCircle2 className="h-4 w-4" />
                 ) : (
                   <AlertCircle className="h-4 w-4" />

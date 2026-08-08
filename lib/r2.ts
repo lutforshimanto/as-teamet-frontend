@@ -1,8 +1,12 @@
-import { DeleteObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { randomUUID } from 'crypto';
+import {
+  DeleteObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
+import { randomUUID } from "crypto";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 function getR2Config() {
   const accountId = process.env.R2_ACCOUNT_ID;
@@ -11,8 +15,14 @@ function getR2Config() {
   const bucketName = process.env.R2_BUCKET_NAME;
   const publicUrl = process.env.R2_PUBLIC_URL;
 
-  if (!accountId || !accessKeyId || !secretAccessKey || !bucketName || !publicUrl) {
-    throw new Error('Missing Cloudflare R2 configuration');
+  if (
+    !accountId ||
+    !accessKeyId ||
+    !secretAccessKey ||
+    !bucketName ||
+    !publicUrl
+  ) {
+    throw new Error("Missing Cloudflare R2 configuration");
   }
 
   return { accountId, accessKeyId, secretAccessKey, bucketName, publicUrl };
@@ -22,7 +32,7 @@ export function getR2Client() {
   const { accountId, accessKeyId, secretAccessKey } = getR2Config();
 
   return new S3Client({
-    region: 'auto',
+    region: "auto",
     endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
     credentials: {
       accessKeyId,
@@ -33,23 +43,23 @@ export function getR2Client() {
 
 export function getR2PublicUrl(key: string) {
   const { publicUrl } = getR2Config();
-  return `${publicUrl.replace(/\/$/, '')}/${key.replace(/^\//, '')}`;
+  return `${publicUrl.replace(/\/$/, "")}/${key.replace(/^\//, "")}`;
 }
 
 export function getUploadValidation(file: File) {
   if (!ALLOWED_TYPES.includes(file.type)) {
-    throw new Error('Only JPEG, PNG, WebP and GIF images are allowed');
+    throw new Error("Only JPEG, PNG, WebP and GIF images are allowed");
   }
 
   if (file.size > MAX_FILE_SIZE) {
-    throw new Error('File size must be less than 5MB');
+    throw new Error("File size must be less than 5MB");
   }
 
   return true;
 }
 
-export function buildObjectKey(fileName: string, prefix = 'images') {
-  const extension = fileName.split('.').pop()?.toLowerCase() || 'jpg';
+export function buildObjectKey(fileName: string, prefix = "images") {
+  const extension = fileName.split(".").pop()?.toLowerCase() || "jpg";
   return `${prefix}/${Date.now()}-${randomUUID()}.${extension}`;
 }
 
@@ -64,7 +74,7 @@ export async function uploadToR2(file: File, key: string) {
       Key: key,
       Body: buffer,
       ContentType: file.type,
-    })
+    }),
   );
 
   return {
@@ -81,6 +91,6 @@ export async function deleteFromR2(key: string) {
     new DeleteObjectCommand({
       Bucket: bucketName,
       Key: key,
-    })
+    }),
   );
 }

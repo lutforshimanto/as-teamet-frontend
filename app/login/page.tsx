@@ -1,29 +1,29 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useForm, Controller } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Truck, Eye, EyeOff, ArrowLeft, Loader2 } from 'lucide-react';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useForm, Controller } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Truck, Eye, EyeOff, ArrowLeft, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
-import { useAppDispatch } from '@/lib/redux/hooks';
-import { login } from '@/lib/redux/slices/authSlice';
+} from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { useAppDispatch } from "@/lib/redux/hooks";
+import { login } from "@/lib/redux/slices/authSlice";
 
 const schema = z.object({
-  employeeId: z.string().min(1, 'Employee ID is required'),
-  password: z.string().min(1, 'Password is required'),
+  employeeId: z.string().min(1, "Employee ID is required"),
+  password: z.string().min(1, "Password is required"),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -41,18 +41,25 @@ export default function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { employeeId: '', password: '' },
+    defaultValues: { employeeId: "", password: "" },
   });
 
   const onSubmit = async (data: FormData) => {
     try {
       await dispatch(login(data)).unwrap();
-      toast({ title: 'Welcome back!', description: 'You have signed in successfully.' });
-      const redirect = searchParams.get('redirect') || '/dashboard';
+      toast({
+        title: "Welcome back!",
+        description: "You have signed in successfully.",
+      });
+      const redirect = searchParams.get("redirect") || "/dashboard";
       router.push(redirect);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Login failed';
-      toast({ variant: 'destructive', title: 'Sign in failed', description: message });
+      const message = err instanceof Error ? err.message : "Login failed";
+      toast({
+        variant: "destructive",
+        title: "Sign in failed",
+        description: message,
+      });
     }
   };
 
@@ -94,7 +101,9 @@ export default function LoginPage() {
                     )}
                   />
                   {errors.employeeId && (
-                    <p className="text-sm text-destructive">{errors.employeeId.message}</p>
+                    <p className="text-sm text-destructive">
+                      {errors.employeeId.message}
+                    </p>
                   )}
                 </div>
 
@@ -107,7 +116,7 @@ export default function LoginPage() {
                       <div className="relative">
                         <Input
                           id="password"
-                          type={showPassword ? 'text' : 'password'}
+                          type={showPassword ? "text" : "password"}
                           placeholder="Enter your password"
                           autoComplete="current-password"
                           disabled={isSubmitting}
@@ -130,18 +139,24 @@ export default function LoginPage() {
                     )}
                   />
                   {errors.password && (
-                    <p className="text-sm text-destructive">{errors.password.message}</p>
+                    <p className="text-sm text-destructive">
+                      {errors.password.message}
+                    </p>
                   )}
                 </div>
 
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isSubmitting}
+                >
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Signing in...
                     </>
                   ) : (
-                    'Sign in'
+                    "Sign in"
                   )}
                 </Button>
               </form>

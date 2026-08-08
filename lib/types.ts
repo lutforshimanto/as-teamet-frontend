@@ -1,12 +1,9 @@
-export type Role = 'admin' | 'employee';
+export type Role = "admin" | "employee";
 
 export type TaskType =
-  | 'moving'
-  | 'cleaning'
-  | 'construction'
-  | 'garbage-collection';
+  "moving" | "cleaning" | "construction" | "garbage-collection";
 
-export type TaskStatus = 'pending' | 'in-progress' | 'completed' | 'cancelled';
+export type TaskStatus = "pending" | "in-progress" | "completed" | "cancelled";
 
 export interface User {
   _id: string;
@@ -51,7 +48,8 @@ export interface Task {
   numEmployees: number;
   description: string;
   assignedEmployees: Array<string | AssignedEmployee>;
-  client: string | { _id?: string; name: string; address: string; phone: string };
+  client:
+    string | { _id?: string; name: string; address: string; phone: string };
   status: TaskStatus;
   startDate?: string;
   endDate?: string;

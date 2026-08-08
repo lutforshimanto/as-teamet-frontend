@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import Link from 'next/link';
+import { useEffect } from "react";
+import Link from "next/link";
 import {
   ListTodo,
   Users,
@@ -9,21 +9,21 @@ import {
   Clock,
   TrendingUp,
   ArrowRight,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { StatusBadge } from '@/components/dashboard/status-badge';
-import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
-import { fetchTasks } from '@/lib/redux/slices/tasksSlice';
-import { fetchUsers } from '@/lib/redux/slices/usersSlice';
-import { fetchClients } from '@/lib/redux/slices/clientsSlice';
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { StatusBadge } from "@/components/dashboard/status-badge";
+import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
+import { fetchTasks } from "@/lib/redux/slices/tasksSlice";
+import { fetchUsers } from "@/lib/redux/slices/usersSlice";
+import { fetchClients } from "@/lib/redux/slices/clientsSlice";
 
 export default function DashboardPage() {
   const dispatch = useAppDispatch();
@@ -34,54 +34,58 @@ export default function DashboardPage() {
 
   useEffect(() => {
     dispatch(fetchTasks());
-    if (user?.role === 'admin') {
+    if (user?.role === "admin") {
       dispatch(fetchUsers());
       dispatch(fetchClients());
     }
   }, [dispatch, user]);
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toISOString().split("T")[0];
   const todayTasks = tasks.filter(
-    (t) => (t.startDate && t.startDate.split('T')[0] === today) || t.status === 'pending'
+    (t) =>
+      (t.startDate && t.startDate.split("T")[0] === today) ||
+      t.status === "pending",
   );
-  const pendingCount = tasks.filter((t) => t.status === 'pending').length;
-  const inProgressCount = tasks.filter((t) => t.status === 'in-progress').length;
-  const completedCount = tasks.filter((t) => t.status === 'completed').length;
+  const pendingCount = tasks.filter((t) => t.status === "pending").length;
+  const inProgressCount = tasks.filter(
+    (t) => t.status === "in-progress",
+  ).length;
+  const completedCount = tasks.filter((t) => t.status === "completed").length;
 
   const stats = [
     {
       label: "Today's Tasks",
       value: todayTasks.length,
       icon: Clock,
-      color: 'bg-blue-100 text-blue-600',
+      color: "bg-blue-100 text-blue-600",
     },
     {
-      label: 'Pending',
+      label: "Pending",
       value: pendingCount,
       icon: ListTodo,
-      color: 'bg-amber-100 text-amber-600',
+      color: "bg-amber-100 text-amber-600",
     },
     {
-      label: 'In Progress',
+      label: "In Progress",
       value: inProgressCount,
       icon: TrendingUp,
-      color: 'bg-indigo-100 text-indigo-600',
+      color: "bg-indigo-100 text-indigo-600",
     },
     {
-      label: 'Completed',
+      label: "Completed",
       value: completedCount,
       icon: ListTodo,
-      color: 'bg-emerald-100 text-emerald-600',
+      color: "bg-emerald-100 text-emerald-600",
     },
   ];
 
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === "admin";
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
-          Welcome back, {user?.name?.split(' ')[0]}
+          Welcome back, {user?.name?.split(" ")[0]}
         </h1>
         <p className="text-sm text-muted-foreground">
           Here&apos;s what&apos;s happening with your team today.
@@ -93,12 +97,16 @@ export default function DashboardPage() {
         {stats.map((stat) => (
           <Card key={stat.label}>
             <CardContent className="flex items-center gap-3 p-4">
-              <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${stat.color}`}>
+              <div
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${stat.color}`}
+              >
                 <stat.icon className="h-5 w-5" />
               </div>
               <div className="min-w-0">
                 <p className="text-2xl font-bold leading-none">{stat.value}</p>
-                <p className="mt-1 truncate text-xs text-muted-foreground">{stat.label}</p>
+                <p className="mt-1 truncate text-xs text-muted-foreground">
+                  {stat.label}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -115,12 +123,18 @@ export default function DashboardPage() {
                   <Users className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold leading-none">{users.length}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">Team Members</p>
+                  <p className="text-2xl font-bold leading-none">
+                    {users.length}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Team Members
+                  </p>
                 </div>
               </div>
               <Button asChild variant="ghost" size="sm">
-                <Link href="/dashboard/users">View all <ArrowRight className="ml-1 h-4 w-4" /></Link>
+                <Link href="/dashboard/users">
+                  View all <ArrowRight className="ml-1 h-4 w-4" />
+                </Link>
               </Button>
             </CardContent>
           </Card>
@@ -131,12 +145,16 @@ export default function DashboardPage() {
                   <Building2 className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold leading-none">{clients.length}</p>
+                  <p className="text-2xl font-bold leading-none">
+                    {clients.length}
+                  </p>
                   <p className="mt-1 text-xs text-muted-foreground">Clients</p>
                 </div>
               </div>
               <Button asChild variant="ghost" size="sm">
-                <Link href="/dashboard/clients">View all <ArrowRight className="ml-1 h-4 w-4" /></Link>
+                <Link href="/dashboard/clients">
+                  View all <ArrowRight className="ml-1 h-4 w-4" />
+                </Link>
               </Button>
             </CardContent>
           </Card>
@@ -148,14 +166,16 @@ export default function DashboardPage() {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className="text-lg">Recent Tasks</CardTitle>
-            <CardDescription>Your latest assigned and active tasks</CardDescription>
+            <CardDescription>
+              Your latest assigned and active tasks
+            </CardDescription>
           </div>
           <Button asChild variant="outline" size="sm">
             <Link href="/dashboard/tasks">View all</Link>
           </Button>
         </CardHeader>
         <CardContent>
-          {tasksStatus === 'loading' || tasksStatus === 'idle' ? (
+          {tasksStatus === "loading" || tasksStatus === "idle" ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
                 <Skeleton key={i} className="h-16 w-full" />
@@ -175,10 +195,12 @@ export default function DashboardPage() {
                 >
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium capitalize">
-                      {task.taskType.replace('-', ' ')}
+                      {task.taskType.replace("-", " ")}
                     </p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {typeof task.client === 'string' ? 'Client selected' : task.client.name}
+                      {typeof task.client === "string"
+                        ? "Client selected"
+                        : task.client.name}
                     </p>
                   </div>
                   <StatusBadge status={task.status} />

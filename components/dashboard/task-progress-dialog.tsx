@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
-import { Loader2 } from 'lucide-react';
+import { useEffect } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -10,25 +10,30 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { StatusBadge } from '@/components/dashboard/status-badge';
-import ImageUploader from '@/components/ImageUploader';
-import { useToast } from '@/hooks/use-toast';
-import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
-import { addPhoto, logHours, updateTask, updateTaskProgress } from '@/lib/redux/slices/tasksSlice';
-import type { Client, Task, TaskStatus, User } from '@/lib/types';
-import { normalizeAssignedEmployeeIds } from '@/lib/utils';
+} from "@/components/ui/select";
+import { StatusBadge } from "@/components/dashboard/status-badge";
+import ImageUploader from "@/components/ImageUploader";
+import { useToast } from "@/hooks/use-toast";
+import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
+import {
+  addPhoto,
+  logHours,
+  updateTask,
+  updateTaskProgress,
+} from "@/lib/redux/slices/tasksSlice";
+import type { Client, Task, TaskStatus, User } from "@/lib/types";
+import { normalizeAssignedEmployeeIds } from "@/lib/utils";
 
 interface FormData {
   status: TaskStatus;
@@ -49,15 +54,31 @@ interface Props {
   users: User[];
 }
 
-export function TaskProgressDialog({ task, open, onOpenChange, isAdmin, clients, users }: Props) {
+export function TaskProgressDialog({
+  task,
+  open,
+  onOpenChange,
+  isAdmin,
+  clients,
+  users,
+}: Props) {
   const dispatch = useAppDispatch();
   const { toast } = useToast();
   const currentUser = useAppSelector((state) => state.auth.user);
   const authToken = useAppSelector((state) => state.auth.token);
-  const currentTask = useAppSelector((state) => state.tasks.items.find((item) => item._id === task._id) ?? task);
-  const initialClientId = typeof currentTask.client === 'string' ? currentTask.client : currentTask.client?._id || '';
-  const employees = users.filter((user) => user.role === 'employee' || user.role === 'admin');
-  const currentAssignedEmployeeIds = normalizeAssignedEmployeeIds(currentTask.assignedEmployees || []);
+  const currentTask = useAppSelector(
+    (state) => state.tasks.items.find((item) => item._id === task._id) ?? task,
+  );
+  const initialClientId =
+    typeof currentTask.client === "string"
+      ? currentTask.client
+      : currentTask.client?._id || "";
+  const employees = users.filter(
+    (user) => user.role === "employee" || user.role === "admin",
+  );
+  const currentAssignedEmployeeIds = normalizeAssignedEmployeeIds(
+    currentTask.assignedEmployees || [],
+  );
 
   const {
     control,
@@ -68,8 +89,10 @@ export function TaskProgressDialog({ task, open, onOpenChange, isAdmin, clients,
   } = useForm<FormData>({
     defaultValues: {
       status: currentTask.status,
-      startDate: currentTask.startDate ? currentTask.startDate.split('T')[0] : '',
-      endDate: currentTask.endDate ? currentTask.endDate.split('T')[0] : '',
+      startDate: currentTask.startDate
+        ? currentTask.startDate.split("T")[0]
+        : "",
+      endDate: currentTask.endDate ? currentTask.endDate.split("T")[0] : "",
       description: currentTask.description,
       numEmployees: currentTask.numEmployees,
       clientId: initialClientId,
@@ -83,17 +106,22 @@ export function TaskProgressDialog({ task, open, onOpenChange, isAdmin, clients,
     reset: resetHours,
     watch: watchHours,
     formState: { isSubmitting: isHoursSubmitting },
-  } = useForm<{ date: string; startTime: string; endTime: string; notes: string }>({
-    defaultValues: { date: '', startTime: '', endTime: '', notes: '' },
+  } = useForm<{
+    date: string;
+    startTime: string;
+    endTime: string;
+    notes: string;
+  }>({
+    defaultValues: { date: "", startTime: "", endTime: "", notes: "" },
   });
 
-  const startTime = watchHours('startTime');
-  const endTime = watchHours('endTime');
+  const startTime = watchHours("startTime");
+  const endTime = watchHours("endTime");
   const computedHours = (() => {
     if (!startTime || !endTime) return 0;
 
-    const [startHour, startMinute] = startTime.split(':').map(Number);
-    const [endHour, endMinute] = endTime.split(':').map(Number);
+    const [startHour, startMinute] = startTime.split(":").map(Number);
+    const [endHour, endMinute] = endTime.split(":").map(Number);
 
     const startTotalMinutes = startHour * 60 + startMinute;
     const endTotalMinutes = endHour * 60 + endMinute;
@@ -107,12 +135,19 @@ export function TaskProgressDialog({ task, open, onOpenChange, isAdmin, clients,
 
     reset({
       status: currentTask.status,
-      startDate: currentTask.startDate ? currentTask.startDate.split('T')[0] : '',
-      endDate: currentTask.endDate ? currentTask.endDate.split('T')[0] : '',
+      startDate: currentTask.startDate
+        ? currentTask.startDate.split("T")[0]
+        : "",
+      endDate: currentTask.endDate ? currentTask.endDate.split("T")[0] : "",
       description: currentTask.description,
       numEmployees: currentTask.numEmployees,
-      clientId: typeof currentTask.client === 'string' ? currentTask.client : currentTask.client?._id || '',
-      assignedEmployeeIds: normalizeAssignedEmployeeIds(currentTask.assignedEmployees || []),
+      clientId:
+        typeof currentTask.client === "string"
+          ? currentTask.client
+          : currentTask.client?._id || "",
+      assignedEmployeeIds: normalizeAssignedEmployeeIds(
+        currentTask.assignedEmployees || [],
+      ),
     });
   }, [open, currentTask, reset]);
 
@@ -120,12 +155,22 @@ export function TaskProgressDialog({ task, open, onOpenChange, isAdmin, clients,
     const assignedEmployeeIds = data.assignedEmployeeIds || [];
     const uniqueEmployeeIds = new Set(assignedEmployeeIds);
     if (uniqueEmployeeIds.size !== assignedEmployeeIds.length) {
-      toast({ variant: 'destructive', title: 'Invalid selection', description: 'Assigned employees cannot include the same employee twice.' });
+      toast({
+        variant: "destructive",
+        title: "Invalid selection",
+        description:
+          "Assigned employees cannot include the same employee twice.",
+      });
       return;
     }
 
     if ((assignedEmployeeIds.length || 0) > (data.numEmployees || 0)) {
-      toast({ variant: 'destructive', title: 'Invalid selection', description: 'Assigned employees cannot exceed the number of employees required for this task.' });
+      toast({
+        variant: "destructive",
+        title: "Invalid selection",
+        description:
+          "Assigned employees cannot exceed the number of employees required for this task.",
+      });
       return;
     }
 
@@ -144,7 +189,7 @@ export function TaskProgressDialog({ task, open, onOpenChange, isAdmin, clients,
               client: data.clientId || undefined,
               assignedEmployees: data.assignedEmployeeIds || [],
             } as any,
-          })
+          }),
         );
       } else {
         resultAction = await dispatch(
@@ -153,58 +198,88 @@ export function TaskProgressDialog({ task, open, onOpenChange, isAdmin, clients,
             startDate: data.startDate || undefined,
             endDate: data.endDate || undefined,
             status: data.status,
-          })
+          }),
         );
       }
 
-      if (updateTask.fulfilled.match(resultAction) || updateTaskProgress.fulfilled.match(resultAction)) {
-        const payload = 'payload' in resultAction ? resultAction.payload : undefined;
-        toast({ title: 'Task updated', description: payload?.message || 'Changes have been saved.' });
+      if (
+        updateTask.fulfilled.match(resultAction) ||
+        updateTaskProgress.fulfilled.match(resultAction)
+      ) {
+        const payload =
+          "payload" in resultAction ? resultAction.payload : undefined;
+        toast({
+          title: "Task updated",
+          description: payload?.message || "Changes have been saved.",
+        });
         onOpenChange(false);
         return;
       }
 
-      const message = resultAction.payload?.message || resultAction.error.message || 'Failed to update task';
-      toast({ variant: 'destructive', title: 'Error', description: message });
+      const message =
+        resultAction.payload?.message ||
+        resultAction.error.message ||
+        "Failed to update task";
+      toast({ variant: "destructive", title: "Error", description: message });
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to update task';
-      toast({ variant: 'destructive', title: 'Error', description: message });
+      const message =
+        err instanceof Error ? err.message : "Failed to update task";
+      toast({ variant: "destructive", title: "Error", description: message });
     }
   };
 
-  const onLogHours = async (data: { date: string; startTime: string; endTime: string; notes: string }) => {
+  const onLogHours = async (data: {
+    date: string;
+    startTime: string;
+    endTime: string;
+    notes: string;
+  }) => {
     const hours = computedHours;
 
     if (!data.date || !data.startTime || !data.endTime || hours <= 0) {
-      toast({ variant: 'destructive', title: 'Invalid time range', description: 'Please enter a valid start and end time.' });
+      toast({
+        variant: "destructive",
+        title: "Invalid time range",
+        description: "Please enter a valid start and end time.",
+      });
       return;
     }
 
     try {
-      const resultAction = await dispatch(logHours({
-        id: currentTask._id,
-        data: {
-          date: data.date,
-          hours,
-          startTime: data.startTime,
-          endTime: data.endTime,
-          notes: data.notes || undefined,
-          employee: currentUser?._id,
-          employeeId: currentUser?.employeeId,
-        },
-      }));
+      const resultAction = await dispatch(
+        logHours({
+          id: currentTask._id,
+          data: {
+            date: data.date,
+            hours,
+            startTime: data.startTime,
+            endTime: data.endTime,
+            notes: data.notes || undefined,
+            employee: currentUser?._id,
+            employeeId: currentUser?.employeeId,
+          },
+        }),
+      );
 
       if (logHours.fulfilled.match(resultAction)) {
-        toast({ title: 'Hours logged', description: resultAction.payload.message || 'The time entry has been added.' });
-        resetHours({ date: '', startTime: '', endTime: '', notes: '' });
+        toast({
+          title: "Hours logged",
+          description:
+            resultAction.payload.message || "The time entry has been added.",
+        });
+        resetHours({ date: "", startTime: "", endTime: "", notes: "" });
         return;
       }
 
-      const message = resultAction.payload?.message || resultAction.error.message || 'Failed to log hours';
-      toast({ variant: 'destructive', title: 'Error', description: message });
+      const message =
+        resultAction.payload?.message ||
+        resultAction.error.message ||
+        "Failed to log hours";
+      toast({ variant: "destructive", title: "Error", description: message });
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to log hours';
-      toast({ variant: 'destructive', title: 'Error', description: message });
+      const message =
+        err instanceof Error ? err.message : "Failed to log hours";
+      toast({ variant: "destructive", title: "Error", description: message });
     }
   };
 
@@ -212,16 +287,23 @@ export function TaskProgressDialog({ task, open, onOpenChange, isAdmin, clients,
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="capitalize">{currentTask.taskType.replace('-', ' ')}</DialogTitle>
+          <DialogTitle className="capitalize">
+            {currentTask.taskType.replace("-", " ")}
+          </DialogTitle>
           <DialogDescription>
-            {isAdmin ? 'Edit task details' : 'Update task progress'} — {typeof currentTask.client === 'string' ? 'Client selected' : currentTask.client.name}
+            {isAdmin ? "Edit task details" : "Update task progress"} —{" "}
+            {typeof currentTask.client === "string"
+              ? "Client selected"
+              : currentTask.client.name}
           </DialogDescription>
         </DialogHeader>
 
         {/* Task info */}
         <div className="space-y-3 rounded-lg border bg-secondary/30 p-4">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Current Status</span>
+            <span className="text-sm text-muted-foreground">
+              Current Status
+            </span>
             <StatusBadge status={currentTask.status} />
           </div>
           <div>
@@ -282,7 +364,9 @@ export function TaskProgressDialog({ task, open, onOpenChange, isAdmin, clients,
                 <Controller
                   name="numEmployees"
                   control={control}
-                  render={({ field }) => <Input type="number" min={1} {...field} />}
+                  render={({ field }) => (
+                    <Input type="number" min={1} {...field} />
+                  )}
                 />
               </div>
               <div className="space-y-2">
@@ -291,14 +375,17 @@ export function TaskProgressDialog({ task, open, onOpenChange, isAdmin, clients,
                   name="clientId"
                   control={control}
                   render={({ field }) => (
-                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value || ""}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Choose a client" />
                       </SelectTrigger>
                       <SelectContent>
                         {clients.map((client) => (
                           <SelectItem key={client._id} value={client._id}>
-                            {client.name} {'<>'} {client.phone}
+                            {client.name} {"<>"} {client.phone}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -312,8 +399,14 @@ export function TaskProgressDialog({ task, open, onOpenChange, isAdmin, clients,
                   name="assignedEmployeeIds"
                   control={control}
                   render={({ field }) => {
-                    const selectedEmployeeIds = normalizeAssignedEmployeeIds(field.value && field.value.length > 0 ? field.value : currentTask.assignedEmployees || []);
-                    const availableEmployees = employees.filter((employee) => !selectedEmployeeIds.includes(employee._id));
+                    const selectedEmployeeIds = normalizeAssignedEmployeeIds(
+                      field.value && field.value.length > 0
+                        ? field.value
+                        : currentTask.assignedEmployees || [],
+                    );
+                    const availableEmployees = employees.filter(
+                      (employee) => !selectedEmployeeIds.includes(employee._id),
+                    );
 
                     return (
                       <div className="space-y-3 rounded-md border p-3">
@@ -324,12 +417,25 @@ export function TaskProgressDialog({ task, open, onOpenChange, isAdmin, clients,
 
                             const uniqueValues = new Set(nextValue);
                             if (uniqueValues.size !== nextValue.length) {
-                              toast({ variant: 'destructive', title: 'Invalid selection', description: 'Assigned employees cannot include the same employee twice.' });
+                              toast({
+                                variant: "destructive",
+                                title: "Invalid selection",
+                                description:
+                                  "Assigned employees cannot include the same employee twice.",
+                              });
                               return;
                             }
 
-                            if (nextValue.length > (watchTask('numEmployees') || 0)) {
-                              toast({ variant: 'destructive', title: 'Invalid selection', description: 'Assigned employees cannot exceed the number of employees required for this task.' });
+                            if (
+                              nextValue.length >
+                              (watchTask("numEmployees") || 0)
+                            ) {
+                              toast({
+                                variant: "destructive",
+                                title: "Invalid selection",
+                                description:
+                                  "Assigned employees cannot exceed the number of employees required for this task.",
+                              });
                               return;
                             }
 
@@ -338,12 +444,21 @@ export function TaskProgressDialog({ task, open, onOpenChange, isAdmin, clients,
                           disabled={availableEmployees.length === 0}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder={availableEmployees.length > 0 ? 'Select an employee' : 'All employees assigned'} />
+                            <SelectValue
+                              placeholder={
+                                availableEmployees.length > 0
+                                  ? "Select an employee"
+                                  : "All employees assigned"
+                              }
+                            />
                           </SelectTrigger>
                           <SelectContent>
                             {availableEmployees.map((employee) => (
-                              <SelectItem key={employee._id} value={employee._id}>
-                                {employee.name} {'<>'} {employee.employeeId}
+                              <SelectItem
+                                key={employee._id}
+                                value={employee._id}
+                              >
+                                {employee.name} {"<>"} {employee.employeeId}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -352,16 +467,27 @@ export function TaskProgressDialog({ task, open, onOpenChange, isAdmin, clients,
                         {selectedEmployeeIds.length > 0 ? (
                           <div className="flex flex-wrap gap-2">
                             {selectedEmployeeIds.map((employeeId) => {
-                              const employee = employees.find((item) => item._id === employeeId);
+                              const employee = employees.find(
+                                (item) => item._id === employeeId,
+                              );
                               if (!employee) return null;
 
                               return (
-                                <div key={employee._id} className="flex items-center gap-2 rounded-full border bg-background px-2 py-1 text-sm">
+                                <div
+                                  key={employee._id}
+                                  className="flex items-center gap-2 rounded-full border bg-background px-2 py-1 text-sm"
+                                >
                                   <span>{employee.name}</span>
                                   <button
                                     type="button"
                                     className="text-muted-foreground hover:text-foreground"
-                                    onClick={() => field.onChange(selectedEmployeeIds.filter((id) => id !== employee._id))}
+                                    onClick={() =>
+                                      field.onChange(
+                                        selectedEmployeeIds.filter(
+                                          (id) => id !== employee._id,
+                                        ),
+                                      )
+                                    }
                                   >
                                     ×
                                   </button>
@@ -370,7 +496,9 @@ export function TaskProgressDialog({ task, open, onOpenChange, isAdmin, clients,
                             })}
                           </div>
                         ) : (
-                          <p className="text-sm text-muted-foreground">No employees selected yet.</p>
+                          <p className="text-sm text-muted-foreground">
+                            No employees selected yet.
+                          </p>
                         )}
                       </div>
                     );
@@ -389,7 +517,12 @@ export function TaskProgressDialog({ task, open, onOpenChange, isAdmin, clients,
           )}
 
           <DialogFooter className="pt-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
@@ -399,7 +532,7 @@ export function TaskProgressDialog({ task, open, onOpenChange, isAdmin, clients,
                   Saving...
                 </>
               ) : (
-                'Save Changes'
+                "Save Changes"
               )}
             </Button>
           </DialogFooter>
@@ -409,43 +542,68 @@ export function TaskProgressDialog({ task, open, onOpenChange, isAdmin, clients,
           <div className="space-y-4 rounded-lg border bg-secondary/20 p-4">
             <div>
               <h4 className="font-medium">Quick updates</h4>
-              <p className="text-sm text-muted-foreground">Add hours or a photo for this task.</p>
+              <p className="text-sm text-muted-foreground">
+                Add hours or a photo for this task.
+              </p>
             </div>
 
-            <form onSubmit={handleHoursSubmit(onLogHours)} className="space-y-3">
+            <form
+              onSubmit={handleHoursSubmit(onLogHours)}
+              className="space-y-3"
+            >
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="hoursDate">Date</Label>
-                  <Input type="date" {...registerHours('date', { required: true })} />
+                  <Input
+                    type="date"
+                    {...registerHours("date", { required: true })}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="hoursStartTime">Start Time</Label>
-                  <Input type="time" {...registerHours('startTime', { required: true })} />
+                  <Input
+                    type="time"
+                    {...registerHours("startTime", { required: true })}
+                  />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="hoursEndTime">End Time</Label>
-                  <Input type="time" {...registerHours('endTime', { required: true })} />
+                  <Input
+                    type="time"
+                    {...registerHours("endTime", { required: true })}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="hoursValue">Auto Hours</Label>
-                  <Input type="text" value={computedHours.toFixed(2)} readOnly />
+                  <Input
+                    type="text"
+                    value={computedHours.toFixed(2)}
+                    readOnly
+                  />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="hoursNotes">Notes</Label>
-                <Textarea placeholder="Add notes for the hour entry" {...registerHours('notes')} />
+                <Textarea
+                  placeholder="Add notes for the hour entry"
+                  {...registerHours("notes")}
+                />
               </div>
-              <Button type="submit" variant="outline" disabled={isHoursSubmitting}>
-                {isHoursSubmitting ? 'Saving...' : 'Log Hours'}
+              <Button
+                type="submit"
+                variant="outline"
+                disabled={isHoursSubmitting}
+              >
+                {isHoursSubmitting ? "Saving..." : "Log Hours"}
               </Button>
             </form>
 
             <div className="space-y-3">
               <ImageUploader
                 taskId={currentTask._id}
-                userId={currentUser?._id || 'unknown'}
+                userId={currentUser?._id || "unknown"}
                 token={authToken || undefined}
               />
             </div>
